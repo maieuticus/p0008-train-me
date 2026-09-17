@@ -1,0 +1,13 @@
+.git
+.env
+.env.*
+.artifacts
+.venv
+node_modules
+**/__pycache__
+**/*.egg-info
+build
+target
+docs/raw-materials
+.devcontainer/local.json
+.devcontainer/compose.local.yaml

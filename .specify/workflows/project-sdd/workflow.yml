@@ -1,0 +1,42 @@
+schema_version: "1.0"
+workflow:
+  id: project-sdd
+  name: Projektentwicklung mit DV-Konzept
+  version: "1.0.0"
+  description: Spezifikation, Plan, Umsetzung und Prüfung mit zentralem DV-Konzept.
+inputs:
+  spec:
+    type: string
+    required: true
+    prompt: Beschreibe das abgegrenzte Feature.
+steps:
+  - id: specify
+    type: command
+    command: speckit.specify
+    input:
+      args: "{{ inputs.spec }}"
+  - id: plan
+    type: command
+    command: speckit.plan
+    input:
+      args: "Berücksichtige docs/DV_KONZEPT.md und die Constitution."
+  - id: tasks
+    type: command
+    command: speckit.tasks
+  - id: analyze
+    type: command
+    command: speckit.analyze
+  - id: implement
+    type: command
+    command: speckit.implement
+  - id: checks
+    type: shell
+    run: python scripts/check.py
+  - id: converge
+    type: command
+    command: speckit.converge
+  - id: review
+    type: gate
+    message: "Akzeptanzkriterien, offene Tasks, Prüfergebnisse und DV-Konzept prüfen. Bei Lücken abbrechen und nacharbeiten."
+    options: [approve, reject]
+    on_reject: abort

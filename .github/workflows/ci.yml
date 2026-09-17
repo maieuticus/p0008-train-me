@@ -1,0 +1,102 @@
+name: Template-Prüfung
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  template:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install -r scripts/requirements.txt
+      - run: python scripts/check.py
+  projects:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - stack: python
+            extra: ""
+          - stack: typescript
+            extra: ""
+          - stack: java-maven
+            extra: ""
+          - stack: python
+            extra: "--recipe api-service"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - run: python -m pip install -r scripts/requirements.txt
+      - run: python scripts/create_project.py --name smoke-project --stack ${{ matrix.stack }} ${{ matrix.extra }} --output .artifacts/project
+      - name: Python-Abhängigkeiten
+        if: matrix.stack == 'python'
+        working-directory: .artifacts/project
+        run: python -m pip install -e ".[test]"
+      - name: Node-Abhängigkeiten
+        if: matrix.stack == 'typescript'
+        working-directory: .artifacts/project
+        run: npm ci
+      - working-directory: .artifacts/project
+        run: python scripts/check.py
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install -r scripts/requirements.txt specify-cli==1.0.7
+      - run: python scripts/create_project.py --name smoke-integration --recipe api-service --service keycloak --service observability --output .artifacts/integration
+      - working-directory: .artifacts/integration
+        run: python scripts/init_speckit.py --integration copilot
+      - working-directory: .artifacts/integration
+        run: specify workflow validate .specify/workflows/project-sdd/workflow.yml
+      - working-directory: .artifacts/integration
+        run: python scripts/container_init.py
+      - working-directory: .artifacts/integration
+        run: docker compose -f .devcontainer/compose.yaml -f .devcontainer/compose.local.yaml config --quiet
+      - working-directory: .artifacts/integration
+        run: docker compose -f .devcontainer/compose.yaml -f .devcontainer/compose.local.yaml build dev
+      - working-directory: .artifacts/integration
+        run: docker compose -f .devcontainer/compose.yaml -f .devcontainer/compose.local.yaml up -d --wait
+      - name: API und Datenbank im Entwicklungsnetz prüfen
+        working-directory: .artifacts/integration
+        run: |
+          docker compose -f .devcontainer/compose.yaml -f .devcontainer/compose.local.yaml exec -T dev \
+            sh -c 'python -m venv /tmp/app-test && /tmp/app-test/bin/pip install -r scripts/requirements.txt -e ".[test]" && RUN_DATABASE_TESTS=1 /tmp/app-test/bin/python scripts/check.py'
+      - name: Dienstoberflächen prüfen
+        working-directory: .artifacts/integration
+        run: |
+          docker compose -f .devcontainer/compose.yaml -f .devcontainer/compose.local.yaml exec -T dev python - <<'PY'
+          import time
+          import urllib.error
+          import urllib.request
+          for url in ("http://keycloak:8080/realms/development", "http://grafana:3000/api/health", "http://prometheus:9090/-/ready"):
+              for attempt in range(60):
+                  try:
+                      with urllib.request.urlopen(url, timeout=5) as response:
+                          assert response.status == 200
+                      break
+                  except (OSError, urllib.error.URLError):
+                      if attempt == 59:
+                          raise
+                      time.sleep(2)
+          PY
+      - name: Dienste und Testvolumes entfernen
+        if: always()
+        working-directory: .artifacts/integration
+        run: docker compose -f .devcontainer/compose.yaml -f .devcontainer/compose.local.yaml down --volumes

@@ -1,0 +1,5 @@
+environment:
+  KC_BOOTSTRAP_ADMIN_USERNAME: admin
+  KC_BOOTSTRAP_ADMIN_PASSWORD: __GENERATE__
+forward_ports:
+  - keycloak:8080

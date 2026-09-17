@@ -1,0 +1,4 @@
+checks:
+  - [python, -m, unittest, discover, -s, tests, -v]
+setup:
+  - python -m pip install -e .

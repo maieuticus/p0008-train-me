@@ -1,0 +1,9 @@
+features:
+  ghcr.io/devcontainers/features/java:1:
+    version: "21"
+    installMaven: true
+    mavenVersion: "3.9.9"
+checks:
+  - [mvn, --batch-mode, verify]
+setup:
+  - mvn --batch-mode verify

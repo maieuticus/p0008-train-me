@@ -1,0 +1,13 @@
+services:
+  dev:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    command: sleep infinity
+    init: true
+    env_file:
+      - ../.env
+    volumes:
+      - type: bind
+        source: ..
+        target: /workspaces/project

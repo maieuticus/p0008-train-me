@@ -1,0 +1,37 @@
+name: API-Prüfung
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install -r scripts/requirements.txt -e ".[test]"
+      - name: Wegwerfbare Testdatenbank starten
+        shell: bash
+        run: |
+          set -euo pipefail
+          set -a
+          source .env.test.example
+          set +a
+          docker run --detach --name test-postgres --env-file .env.test.example \
+            -p 127.0.0.1:5432:5432 postgres:16
+          ready=0
+          for attempt in {1..60}; do
+            if docker exec test-postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          test "$ready" = 1
+          sed '/^#/d; /^$/d' .env.test.example >> "$GITHUB_ENV"
+          echo RUN_DATABASE_TESTS=1 >> "$GITHUB_ENV"
+      - run: python scripts/check.py
+      - name: Testdatenbank entfernen
+        if: always()
+        run: docker rm -f test-postgres || true

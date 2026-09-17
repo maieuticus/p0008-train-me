@@ -1,0 +1,231 @@
+# DV-Konzept: {{PROJECT_NAME}}
+
+**Status:** Grundgerüst; fachliche Abschnitte vor der ersten Umsetzung ausfüllen.
+**Technologieprofil:** {{STACK}}
+**Entwicklungsdienste:** {{SERVICES}}
+**Rezept:** {{RECIPE}}
+
+Dieses Dokument enthält die verbindliche Projektbeschreibung einschließlich
+Projektziel, Architektur, Entwicklung und Betrieb. README und Quickstart
+verlinken hierher. Keine parallelen Konzeptdokumente anlegen.
+
+## Inhalt
+
+- [Projektziel](#projektziel)
+- [Architektur](#architektur)
+- [Einrichtung](#einrichtung)
+- [Entwicklung](#entwicklung)
+- [Betrieb](#betrieb)
+- [Wissensaustausch](#wissensaustausch)
+- [Offene Entscheidungen](#offene-entscheidungen)
+
+## Projektziel
+
+**Zu konkretisieren:** Welches Problem wird für welche Nutzer gelöst? Welches
+überprüfbare Ergebnis bildet die erste Version? Was bleibt ausdrücklich außerhalb
+des Umfangs? Fachliche Kriterien noch vor der Implementierung abstimmen.
+
+Ursprüngliche Konzepte liegen unter `docs/raw-materials/`. Konkrete Anforderungen
+und Akzeptanzkriterien werden je Feature unter `specs/` gepflegt.
+
+## Architektur
+
+Das Grundgerüst trennt Entwicklungsumgebung, Entwicklungsmethodik,
+Konfiguration, Dokumentation und Anwendungscode:
+
+| Bereich | Maßgebliche Ablage |
+| --- | --- |
+| Entwicklungscontainer und ausgewählte lokale Dienste | `.devcontainer/` |
+| CI, Issues und Pull Requests | `.github/` |
+| Constitution, Vorlagen und Workflow | `.specify/` |
+| Projektmetadaten und Referenz-Repositories | `config/` |
+| Projektbeschreibung | Dieses DV-Konzept |
+| Feature-Spezifikation, Plan und Aufgaben | `specs/<nummer>-<name>/` |
+| Anwendungscode und Tests | Ökosystemstruktur des gewählten Profils |
+| Produktionsartefakte | Bei Bedarf `deploy/` |
+
+**Zu konkretisieren:** Komponenten, Verantwortlichkeiten, Schnittstellen,
+Datenmodell, externe Dienste und Qualitätsanforderungen.
+
+`config/project.yaml` erfasst die Template-Herkunft, Profile und Prüfkommandos.
+`config/repositories.yaml` beschreibt die vorgesehenen Referenz- und Beitragsziele.
+Diese Dateien gehören zur Template-Konvention, nicht zur Spec-Kit-API.
+
+Wesentliche Entscheidungen erhalten bei Bedarf ein Protokoll unter
+`docs/decisions/`. Den geltenden Architekturstand in diesem Abschnitt pflegen.
+
+## Einrichtung
+
+### Voraussetzungen
+
+- Python ab 3.11 für gemeinsame Skripte.
+- Git; optional GitHub CLI für Repository-Zugriff.
+- Für den Devcontainer Docker mit Compose sowie VS Code Dev Containers oder Codespaces.
+- Ohne Container die Laufzeit des gewählten Technologieprofils installieren.
+
+### Entwicklungscontainer
+
+Vor dem ersten Öffnen optional den lokalen Referenzpfad setzen:
+
+```powershell
+python scripts/container_init.py --references-root C:\Git
+```
+
+Linux/macOS verwenden den tatsächlichen Hostpfad. Danach das Projekt mit
+„Reopen in Container“ öffnen. `initializeCommand` bereitet ignorierte lokale
+Dateien vor. `.env` wird nur erstellt, wenn sie fehlt; `__GENERATE__` wird
+durch zufällige lokale Passwörter ersetzt. Vorhandene Konfiguration bleibt erhalten.
+
+Ohne Referenzen genügt `python scripts/container_init.py`. Der Hostpfad bleibt
+in `.devcontainer/local.json`; `REFERENCE_REPOS_ROOT` kann ihn überschreiben.
+Der Mount `/references/repos` ist nur lesbar. Das aktuelle Projekt ist separat
+unter `/workspaces/project` schreibbar.
+
+Codespaces unterstützt keine lokalen Hostpfade. Dort Referenzen separat klonen
+oder über die GitHub CLI lesen. Die Codespaces-Rechte beschränken Remote-Inhalte;
+lokale Klone sind dadurch nicht automatisch schreibgeschützt. Den GitHub-Owner
+bei Bedarf in `config/repositories.yaml` und `devcontainer.json` anpassen.
+
+### Abhängigkeiten
+
+Im Projektverzeichnis:
+
+```sh
+{{SETUP_COMMANDS}}
+```
+
+Bei TypeScript die erzeugte `package-lock.json` committen; CI verwendet `npm ci`.
+Für Python bei der Festlegung der Anwendungsabhängigkeiten einen passenden
+Lock-/Constraint-Stand ergänzen. Die Toolversionen des Grundgerüsts stehen in
+`config/project.yaml` und `scripts/requirements.txt`.
+
+### Spec Kit
+
+Im Container ist die festgelegte Version installiert. Außerhalb die Version
+aus `config/project.yaml` installieren oder `uvx` bereitstellen.
+
+```sh
+python scripts/init_speckit.py --integration copilot
+```
+
+Andere unterstützte Integrationen über `--integration` wählen. Die CLI erzeugt
+ihre Agent-Dateien und Manifeste. Das Skript erhält die Constitution und
+verwendet Bash-Skripte für die Arbeit im Linux-Container.
+Bei bestehender Integration den manifestgestützten Upgrade-Weg benutzen.
+
+## Entwicklung
+
+### Feature-Ablauf
+
+Rohmaterialien und Wissen sichten, Feature spezifizieren, Unklarheiten klären,
+technischen Plan erstellen, Aufgaben ableiten, Konsistenz prüfen, implementieren,
+testen und Ergebnis gegen die Akzeptanzkriterien prüfen.
+
+Der vorbereitete Workflow kann nach Klärung der Anforderungen ausgeführt werden:
+
+```sh
+specify workflow run .specify/workflows/project-sdd/workflow.yml -i spec="Ein kleines Feature"
+```
+
+Der abschließende Review prüft offene Aufgaben aus `converge` und das
+DV-Konzept. Bei Lücken nacharbeiten und erneut prüfen. Kleine Korrekturen
+benötigen nur einen ihrem Umfang angemessenen Prozess.
+
+### Prüfungen
+
+```sh
+python scripts/check.py
+```
+
+Die gemeinsamen Dokument- und Syntaxprüfungen werden durch diese Profilprüfungen ergänzt:
+
+```sh
+{{CHECK_COMMANDS}}
+```
+
+Beim API-Rezept startet `uvicorn app.main:app --host 0.0.0.0 --port 8000` die
+Anwendung. `/health` prüft ausschließlich Liveness. Der eingecheckte Vertrag
+unter `openapi/` muss zur Implementierung passen. Datenbanktests benötigen
+`RUN_DATABASE_TESTS=1` und die PostgreSQL-Verbindungsvariablen; im Devcontainer
+sind diese über `.env` gesetzt. Ohne das Flag wird der DB-Test sichtbar übersprungen.
+Die API-CI startet eine wegwerfbare Datenbank mit `.env.test.example`.
+
+Für zusätzliche Anforderungen konkrete Tests und Befehle im Feature-Plan
+festhalten. Tatsächlich ausgeführte und nicht ausgeführte Prüfungen unterscheiden.
+
+## Betrieb
+
+### Lokale Dienste
+
+Nur die bei Erzeugung gewählten Dienste werden gestartet. Sie sind
+Entwicklungsdienste. Benannte Docker-Volumes speichern ihre Daten.
+Im Container gibt es keinen Host-Docker-Socket.
+
+Verwaltung auf dem Docker-Host nach `python scripts/container_init.py`:
+
+```sh
+docker compose -f .devcontainer/compose.yaml -f .devcontainer/compose.local.yaml ps
+docker compose -f .devcontainer/compose.yaml -f .devcontainer/compose.local.yaml logs --tail 100
+docker compose -f .devcontainer/compose.yaml -f .devcontainer/compose.local.yaml down
+```
+
+Das normale `down` erhält Daten. `down --volumes` entfernt sie und ist kein
+Routinebefehl. Geänderte PostgreSQL-Startvariablen ändern keine bereits in einem
+Volume angelegten Benutzer oder Passwörter.
+
+Keycloak startet bei Auswahl im Entwicklungsmodus mit einem leeren Realm.
+Clients, Redirect-URIs und Nutzer erst für die konkrete Anwendung einrichten.
+Grafana/Prometheus enthalten bei Auswahl zunächst Infrastruktur-Selbstbeobachtung;
+Anwendungsmetriken und zusätzliche Dashboards gezielt ergänzen.
+
+### Bereitstellung
+
+**Vor dem ersten Release konkretisieren:** Zielumgebung, Zuständigkeit,
+Image-/Paketversion, Konfiguration, Secrets, Release-Befehl, Health-/Funktionstest,
+Rollback, Backup und Wiederherstellung.
+
+Das API-Rezept liefert `deploy/Dockerfile`. Bauen aus dem Repository-Root:
+`docker build -f deploy/Dockerfile -t PROJECT_IMAGE .`.
+Dies ist noch kein produktives Deployment. Entwicklungsdienste und
+Testzugangsdaten dürfen nicht als Produktionskonfiguration übernommen werden.
+
+### Datenmigration
+
+Bei Datenänderungen Migration, Kompatibilität, Tests und Rückweg gemeinsam
+planen. Produktionsbackups liegen außerhalb des Git-Verzeichnisses.
+`db/init.sql` darf nur frische Testdatenbanken initialisieren. Ein
+Migrationswerkzeug und dessen konkreten Release-Befehl vor der ersten
+Schemaänderung festlegen.
+
+### Störungen und Wiederherstellung
+
+**Zu konkretisieren:** Ansprechpartner, Diagnosebefehle, typische Fehlerbilder,
+Backup-Ort, Aufbewahrung und getesteter Wiederherstellungsablauf.
+
+## Wissensaustausch
+
+Andere Repositories werden als Referenz gelesen. `config/repositories.yaml`
+legt Ziele für Template- und Knowledge-Base-Beiträge fest. Allgemeine
+Technologieerkenntnisse gehören in die Knowledge Base, wiederverwendbare
+Dateien und Abläufe in das Template, Projektdetails in dieses Dokument.
+
+Referenzdateien bleiben unverändert. Einen Beitragsklon vorbereiten:
+
+```sh
+python scripts/prepare_contribution.py knowledge --output .artifacts/contributions/knowledge --branch improve/project-learning
+```
+
+Zuerst die `AGENTS.md` des Ziel-Repositories lesen. Das Skript veröffentlicht
+nichts. Issues, Pushes und PRs erfolgen im ausdrücklich beauftragten Umfang
+mit gezielten Rechten; das normale Referenz-Token benötigt keine pauschalen
+Schreibrechte auf fremde Inhalte.
+
+**Relevante Wissensquellen:** Artikel und den bei wichtigen Entscheidungen
+verwendeten Stand hier ergänzen.
+
+## Offene Entscheidungen
+
+- Fachlicher Umfang und Akzeptanzkriterien der ersten Version.
+- Konkrete Komponenten, Verträge und Datenmodelle.
+- Zusätzliche Qualitäts-, Datenschutz- und Betriebsanforderungen.
+- Produktionsumgebung, Migrationen, Backups und Wiederherstellung.

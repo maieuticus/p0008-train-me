@@ -1,0 +1,14 @@
+# API-Projektkontext
+
+Lies `AGENTS.md`, `.specify/memory/constitution.md` und `docs/DV_KONZEPT.md`.
+
+- Anwendung: `src/app/`; API-Vertrag: `openapi/openapi.json`.
+- Feature-Anforderungen, Plan und Aufgaben: `specs/<nummer>-<name>/`.
+- Gemeinsame Prüfung: `python scripts/check.py`.
+- Bei Datenbanktests `RUN_DATABASE_TESTS=1` und die dokumentierten
+  PostgreSQL-Verbindungsvariablen verwenden.
+- API-Operationen, öffentliche Schemas und Vertragstests gemeinsam ändern.
+- Migrationen, externe Verbraucher und Rückweg vor der Umsetzung planen.
+- Architektur und Betrieb ausschließlich im DV-Konzept pflegen.
+- Entwicklungsdienste über den Docker-Host verwalten; kein Host-Docker-Socket.
+- Keine echten Secrets oder produktiven Daten in Git aufnehmen.

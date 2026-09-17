@@ -1,0 +1,4 @@
+checks:
+  - [python, -m, pytest, -q]
+setup:
+  - python -m pip install -r scripts/requirements.txt -e ".[test]"

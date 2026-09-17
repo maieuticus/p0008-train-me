@@ -1,0 +1,26 @@
+services:
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    volumes:
+      - type: bind
+        source: ../config/observability/prometheus/prometheus.yaml
+        target: /etc/prometheus/prometheus.yml
+        read_only: true
+      - prometheus-data:/prometheus
+  grafana:
+    image: grafana/grafana:12.1.1
+    env_file:
+      - ../.env
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - type: bind
+        source: ../config/observability/grafana/provisioning
+        target: /etc/grafana/provisioning
+        read_only: true
+      - type: bind
+        source: ../config/observability/grafana/dashboards
+        target: /var/lib/grafana/dashboards
+        read_only: true
+volumes:
+  prometheus-data: {}
+  grafana-data: {}

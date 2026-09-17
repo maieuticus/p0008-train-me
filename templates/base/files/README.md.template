@@ -1,0 +1,26 @@
+# {{PROJECT_NAME}}
+
+**Profil:** {{STACK}} | **Dienste:** {{SERVICES}} | **Rezept:** {{RECIPE}}
+
+Projektziel, Architektur, Entwicklung und Betrieb stehen gemeinsam im
+[DV-Konzept](docs/DV_KONZEPT.md).
+
+## Start
+
+1. [Einrichtung](docs/DV_KONZEPT.md#einrichtung) durchführen.
+2. Projektziel und offene Entscheidungen im DV-Konzept konkretisieren.
+3. Das erste kleine Feature unter [specs/](specs/README.md) spezifizieren.
+
+## Orientierung
+
+- [DV-Konzept](docs/DV_KONZEPT.md)
+- [Constitution](.specify/memory/constitution.md)
+- [Arbeitsregeln](AGENTS.md)
+- [Dokumentation](docs/README.md)
+- [Feature-Übersicht](specs/README.md)
+
+## Prüfen
+
+```sh
+python scripts/check.py
+```

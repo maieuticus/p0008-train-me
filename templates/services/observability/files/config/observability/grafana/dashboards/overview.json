@@ -1,0 +1,17 @@
+{
+  "uid": "project-overview",
+  "title": "Entwicklungsdienste",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": {"from": "now-30m", "to": "now"},
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Erreichbare Prometheus-Ziele",
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "gridPos": {"x": 0, "y": 0, "w": 8, "h": 5},
+      "targets": [{"refId": "A", "expr": "sum(up)"}]
+    }
+  ]
+}

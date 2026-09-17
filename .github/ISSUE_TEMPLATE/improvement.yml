@@ -1,0 +1,21 @@
+name: Verbesserung
+description: Konkrete Verbesserung für Projekt, Template oder Knowledge Base
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Beobachtung und betroffene Dateien
+      description: Was ist passiert, und wie lässt sich das nachvollziehen?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Vorschlag und erwartetes Ergebnis
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Prüfung und Quellen
+      description: Reproduktion, getestetes Beispiel, Feature-Spec oder Wissensartikel.

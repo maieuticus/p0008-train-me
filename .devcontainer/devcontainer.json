@@ -1,0 +1,29 @@
+{
+  "name": "template-spec-kit",
+  "dockerComposeFile": ["compose.yaml", "compose.local.yaml"],
+  "service": "dev",
+  "workspaceFolder": "/workspaces/project",
+  "remoteUser": "vscode",
+  "overrideCommand": false,
+  "shutdownAction": "stopCompose",
+  "runServices": ["dev"],
+  "initializeCommand": ["python", "scripts/container_init.py"],
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "customizations": {
+    "codespaces": {
+      "repositories": {
+        "maieuticus/*": {
+          "permissions": {
+            "contents": "read",
+            "issues": "write"
+          }
+        }
+      }
+    },
+    "vscode": {
+      "extensions": ["redhat.vscode-yaml", "yzhang.markdown-all-in-one"]
+    }
+  }
+}

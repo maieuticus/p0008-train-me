@@ -1,0 +1,6 @@
+.git
+.env*
+.venv
+.artifacts
+__pycache__
+docs/raw-materials

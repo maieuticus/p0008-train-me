@@ -1,0 +1,11 @@
+schema_version: 1
+owner: maieuticus
+reference_root_env: REFERENCE_REPOS_ROOT
+reference_mount: /references/repos
+content_access: read
+issue_access: write
+contribution_targets:
+  template: maieuticus/template-spec-kit
+  knowledge: maieuticus/tech-knowledge-base
+# Beschreibt den vorgesehenen Zugriff. Mounts und GitHub-Tokens setzen ihn durch.
+# Remote-Schreibrechte auf Inhalte gehören ausschließlich zu Beitragsklonen.

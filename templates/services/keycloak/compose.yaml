@@ -1,0 +1,14 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.3.3
+    command: [start-dev, --import-realm]
+    env_file:
+      - ../.env
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+      - type: bind
+        source: ./services/keycloak/realm.json
+        target: /opt/keycloak/data/import/development-realm.json
+        read_only: true
+volumes:
+  keycloak-data: {}

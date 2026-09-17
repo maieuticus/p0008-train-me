@@ -1,0 +1,40 @@
+# Cloudflared service snippet for docker-compose.yml — Named Tunnel.
+#
+# Copy the `cloudflared` service below into your docker-compose.yml and
+# adjust `depends_on` / the target service name if needed.
+#
+# IMPORTANT, verified against the real cloudflared binary:
+#
+#   command: tunnel --no-autoupdate run
+#
+# is REQUIRED for a token-based Named Tunnel (stable public hostname,
+# configured once in the Cloudflare dashboard under Networks -> Tunnels ->
+# Public Hostname). Do NOT use:
+#
+#   command: tunnel --no-autoupdate --url http://api:8000
+#
+# The `--url` flag starts an ephemeral "Quick Tunnel" and SILENTLY IGNORES
+# TUNNEL_TOKEN entirely - it prints a brand-new random *.trycloudflare.com
+# URL on every restart, no error, no warning. A real project shipped this
+# exact mistake: its documentation described a stable Named Tunnel setup,
+# but docker-compose.yml actually ran a Quick Tunnel, so every restart
+# silently broke the public URL. Verify with:
+#
+#   docker run --rm -e TUNNEL_TOKEN=<token> cloudflare/cloudflared:latest \
+#     tunnel --no-autoupdate run
+#
+# A valid token should just connect; an invalid one reports
+# "Provided Tunnel token is not valid" (i.e. the token was actually read).
+# If you instead see a "Your quick Tunnel has been created!" banner, the
+# --url flag is still present somewhere and the token is being ignored.
+
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: <project>-cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    depends_on:
+      - api

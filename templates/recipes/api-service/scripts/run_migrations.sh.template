@@ -1,0 +1,41 @@
+#!/bin/sh
+# Apply idempotent migrations. Initial schema creation is explicitly limited
+# to disposable test databases through RUN_INIT_FOR_TESTS=1.
+set -eu
+
+: "${POSTGRES_HOST:=localhost}"
+: "${POSTGRES_PORT:=5432}"
+: "${POSTGRES_USER:?POSTGRES_USER must be set}"
+: "${POSTGRES_DB:?POSTGRES_DB must be set}"
+: "${PGPASSWORD:?PGPASSWORD must be set}"
+
+ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+MIGRATION_DIR="${MIGRATION_DIR:-$ROOT_DIR/db/migrations}"
+INIT_SQL="${INIT_SQL:-$ROOT_DIR/db/init.sql}"
+
+run_sql() {
+    psql --no-psqlrc --set ON_ERROR_STOP=1 \
+        --host "$POSTGRES_HOST" --port "$POSTGRES_PORT" \
+        --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" \
+        --file "$1"
+}
+
+if [ "${RUN_INIT_FOR_TESTS:-0}" = "1" ]; then
+    [ -f "$INIT_SQL" ] || {
+        echo "Init SQL file not found: $INIT_SQL" >&2
+        exit 1
+    }
+    echo "Applying test-only initialization: $INIT_SQL"
+    run_sql "$INIT_SQL"
+fi
+
+[ -d "$MIGRATION_DIR" ] || {
+    echo "Migration directory not found: $MIGRATION_DIR" >&2
+    exit 1
+}
+
+for migration in "$MIGRATION_DIR"/*.sql; do
+    [ -f "$migration" ] || continue
+    echo "Applying migration: $migration"
+    run_sql "$migration"
+done

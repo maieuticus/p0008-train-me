@@ -1,0 +1,40 @@
+"""Reusable Pydantic validation tests for PATCH-style request models.
+
+Copy into `tests/`, replace the configuration values, and retain only the
+examples that match the target model's public contract.
+"""
+
+import pytest
+from pydantic import ValidationError
+
+# --- CONFIG: replace with the model under test and its field names ----------
+from app.schemas import ResourceUpdate
+
+NULLABLE_FIELDS = ("description",)
+REQUIRED_FIELDS = ("title", "status")
+LIST_FIELD = "related_ids"
+# -----------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("field", NULLABLE_FIELDS)
+def test_update_accepts_explicitly_clearing_nullable_fields(field):
+    payload = ResourceUpdate.model_validate({field: None})
+
+    assert getattr(payload, field) is None
+    assert field in payload.model_fields_set
+
+
+def test_update_rejects_an_empty_payload():
+    with pytest.raises(ValidationError, match="At least one field"):
+        ResourceUpdate()
+
+
+@pytest.mark.parametrize("field", REQUIRED_FIELDS)
+def test_update_rejects_null_for_required_fields(field):
+    with pytest.raises(ValidationError, match="cannot be null"):
+        ResourceUpdate.model_validate({field: None})
+
+
+def test_update_rejects_duplicate_related_ids():
+    with pytest.raises(ValidationError, match="must not contain duplicates"):
+        ResourceUpdate.model_validate({LIST_FIELD: [1, 1]})
