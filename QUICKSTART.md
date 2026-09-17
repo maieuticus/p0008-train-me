@@ -1,13 +1,22 @@
-# Quickstart
+# Quickstart: p0008-train-me
 
-Die verbindlichen Schritte und Voraussetzungen stehen im
+Die verbindlichen Voraussetzungen und Schritte stehen im
 [DV-Konzept – Einrichtung](docs/DV_KONZEPT.md#einrichtung).
 
-1. Python ab 3.11 bereitstellen und `python -m pip install -r scripts/requirements.txt` ausführen.
-2. Ein neues Projekt mit `python scripts/create_project.py --name mein-projekt --stack python --output ../mein-projekt` erzeugen.
-3. Das erzeugte Projekt öffnen und dessen README folgen.
-4. Projektziel, Architektur, Entwicklung und Betrieb im dortigen `docs/DV_KONZEPT.md` konkretisieren.
-5. Spec Kit für die gewünschte Agent-Integration initialisieren und das erste kleine Feature spezifizieren.
+1. Das bestehende Repository öffnen und Python ab 3.11 bereitstellen.
+2. `python -m pip install -r scripts/requirements.txt` ausführen.
+3. Mit `python scripts/check.py` den vorhandenen Stand prüfen.
+4. [Projektziel](docs/DV_KONZEPT.md#projektziel),
+   [ersten Funktionsumfang](docs/DV_KONZEPT.md#erster-funktionsumfang) und
+   [offene Entscheidungen](docs/DV_KONZEPT.md#offene-entscheidungen) lesen.
+5. Das erste Feature mit dem vorhandenen Skill `speckit-specify`
+   beschreiben, Anforderungen klären und anschließend technisch planen.
 
-Für die Arbeit am Template selbst gelten
-[Entwicklung und Prüfungen](docs/DV_KONZEPT.md#entwicklung).
+Spec Kit ist bereits für Codex mit PowerShell eingerichtet. Details und
+Hinweise zum optionalen Devcontainer stehen im DV-Konzept.
+Der [Feature-Ablauf](docs/DV_KONZEPT.md#ablauf-je-feature) führt von der
+Spezifikation über Tests bis zur Abnahme.
+
+Ein Startbefehl für die Sport-App wird mit dem ersten lauffähigen Feature
+ergänzt. Der vorhandene Generator und seine Beispielprojekte sind
+übernommenes Template-Material.

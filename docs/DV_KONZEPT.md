@@ -1,19 +1,34 @@
-# DV-Konzept: template-spec-kit
+# DV-Konzept: p0008-train-me
 
-**Stand:** 16.09.2026
-**Status:** Projektgrundgerüst mit optionalen Technologie- und Dienstbausteinen
+**Stand:** 17.09.2026
+
+**Status:** Projektgrundlage für die Sport-App; Anwendung noch nicht implementiert
 
 Dieses Dokument ist die verbindliche Beschreibung von Projektziel, Architektur,
-Entwicklung und Betrieb. README, Quickstart und Verzeichnisübersichten verlinken
-hierher. Getrennte Dateien für Vision, Architektur, Entwicklung oder Betrieb
-werden nicht gepflegt.
+Entwicklung und Betrieb. Grundlage ist das
+[Sport-App-Gesamtkonzept](raw-materials/sport_app_gesamtkonzept_implementierungsleitfaden.md).
+Das Rohmaterial bleibt als ursprüngliche Eingabe erhalten. Verbindliche
+Weiterentwicklungen werden hier und in den jeweiligen Feature-Artefakten gepflegt.
+
+Die [Constitution](../.specify/memory/constitution.md) und die
+[Arbeitsregeln](../AGENTS.md) gelten übergeordnet. Die im Rohmaterial vorgeschlagenen
+separaten Architektur- und Implementierungsdokumente werden durch dieses
+DV-Konzept und `specs/<nummer>-<name>/` abgedeckt. Beispiele für Felder,
+API-Routen, Rollen und Verzeichnisse sind noch keine beschlossenen Detailverträge.
+Offene Entscheidungen und der Bearbeitungsstand des ersten Arbeitspakets
+sind ausdrücklich gekennzeichnet.
 
 ## Inhalt
 
 - [Projektziel](#projektziel)
+- [Aktueller Projektstand](#aktueller-projektstand)
+- [Fachlicher Umfang](#fachlicher-umfang)
 - [Architektur](#architektur)
+- [Daten und Schnittstellen](#daten-und-schnittstellen)
 - [Einrichtung](#einrichtung)
 - [Entwicklung](#entwicklung)
+- [Erster Funktionsumfang](#erster-funktionsumfang)
+- [Offene Entscheidungen](#offene-entscheidungen)
 - [Betrieb](#betrieb)
 - [Wissensaustausch](#wissensaustausch)
 - [Weiterentwicklung und Versionen](#weiterentwicklung-und-versionen)
@@ -22,340 +37,515 @@ werden nicht gepflegt.
 
 ## Projektziel
 
-Das Repository liefert einen wiederverwendbaren Grundaufbau für unterschiedliche
-Softwareprojekte. Der gemeinsame Kern umfasst Spec-Driven Development,
-Dokumentation, Arbeitsregeln, einen Devcontainer und Prüfungen. Technologien
-und Infrastruktur werden nach Bedarf ergänzt.
+`p0008-train-me` wird eine privat genutzte Sport-App für Android und iOS.
+Mehrere Personen erhalten getrennte Trainingsprofile mit eigenen Zielen,
+Einschränkungen, Equipment und Präferenzen. Die App zeigt geplante Trainings
+und führt mit Animationen, Timer, Pausen und gesprochenen Hinweisen durch
+eine Einheit. Ergebnisse und Feedback unterstützen die spätere Trainingsplanung.
 
-Zielgruppe sind Entwickler und Coding-Agenten, die Projekte nachvollziehbar von
-der Anforderung bis zur geprüften Implementierung bearbeiten und Erfahrungen
-anschließend an Template und Knowledge Base zurückgeben.
+Der normale App- und Trainingsbetrieb benötigt keine KI-Aufrufe und verursacht
+keinen laufenden KI-Tokenverbrauch. KI-Werkzeuge unterstützen außerhalb der
+App die Entwicklung, die Erstellung und Pflege von Übungen sowie Vorschläge
+für neue Trainingspläne. Sie arbeiten mit exportiertem Kontext und Entwürfen.
+Eine fachliche Prüfung und Freigabe gehen der produktiven Nutzung voraus.
 
-Der Generator unterstützt einen neutralen Kern, Python, TypeScript und
-Java/Maven. PostgreSQL, Keycloak und Observability sind unabhängig auswählbar.
-Das API-Rezept kombiniert Python, FastAPI und PostgreSQL. Fachliche Funktionen,
-produktive Zugangsdaten und ein fertiges Produktionsdeployment sind nicht Teil
-des Grundgerüsts.
+Ziel ist ein nachvollziehbarer Trainingsablauf mit möglichst wenig Bedienung
+während einer Einheit. Die Entwicklung erfolgt in kleinen, überprüfbaren
+Arbeitspaketen mit manueller Sichtprüfung und Abnahme.
 
-Mobile Frameworks können als weitere Profile ergänzt werden. Native
-Plattformwerkzeuge bleiben eine zusätzliche Voraussetzung; iOS benötigt
-insbesondere die Apple-Entwicklungsumgebung.
+## Aktueller Projektstand
+
+Das Repository enthält bislang das übernommene Template und seine Werkzeuge.
+Die folgende Zielarchitektur beschreibt den geplanten Ausbau.
+
+| Bereich | Vorhandener Stand |
+| --- | --- |
+| Projektregeln | Constitution 1.1.0, AGENTS.md und Feature-Vorlagen vorhanden |
+| Spec Kit | Integration 1.0.7 für Codex mit PowerShell-Skripten; Skills unter `.agents/skills/` |
+| Entwicklungscontainer | Python-Basis und Service `dev`; keine Anwendungsdienste aktiviert |
+| Projektmetadaten | `config/project.yaml` enthält noch `name: template-spec-kit`, `kind: template`, `stack: none` und `services: []` |
+| Referenzmaterial | Generator, Technologieprofile und API-Rezept unter `scripts/` und `templates/` |
+| Bisheriges Feature | `specs/001-template-foundation/` dokumentiert das übernommene Grundgerüst |
+| Erstes Anwendungsfeature | [002 – Backend-Grundgerüst](../specs/002-backend-foundation/spec.md) spezifiziert; technischer Plan und Umsetzung stehen aus |
+| Prüfungen und CI | Template-Tests und CI für erzeugte Beispielprojekte |
+| Sport-App | Noch keine mobile Anwendung, kein projektspezifisches Backend und keine produktive Datenbank |
+
+Die Umstellung von Metadaten, Anwendungsverzeichnissen, Abhängigkeiten,
+Devcontainer und CI wird im ersten technischen Feature gemeinsam geplant.
+Die bestehenden Generatorfunktionen bleiben bis dahin erhalten. Ein erfolgreicher
+Template-Test belegt noch keine lauffähige Sport-App.
+
+## Fachlicher Umfang
+
+### Umfang des MVP
+
+Der MVP umfasst die folgenden Fähigkeiten aus dem Rohkonzept. Er wird über
+mehrere Features aufgebaut; die Tabelle beschreibt keine bereits fertigen Funktionen.
+
+| Bereich | Übernommene Anforderungen | Rohkonzept |
+| --- | --- | --- |
+| Benutzer und Profile | Technische Anmeldung und Trainingsprofil unterscheiden; mehrere getrennte Profile, Ziele, strukturierte Einschränkungen, Equipment, Trainingszeiten und bevorzugte Dauer; profilbezogene Rechte | Abschnitte 3, 4, 16 |
+| Übungskatalog | Eindeutige IDs, Kategorie, Zielmuskulatur, Schwierigkeit, Equipment, Dauer oder Wiederholungen, Standardpause, Animation, Sprachhinweise, Anleitung, typische Fehler, Alternativen und Aktivstatus | Abschnitte 5–7 |
+| Trainingsplanung | Profilgebundene Tages-, Wochen-, Mehrwochen- und Monatsplanung; Entwurf, Prüfung, Freigabe, Aktivierung und Archivierung | Abschnitte 8, 13 |
+| Trainingsplayer | Heutige Einheit, Vorbereitung, Animation, Timer, Pausen und automatischer Übungswechsel; Pause/Fortsetzen, Überspringen, Abbrechen und Feedback | Abschnitt 9 |
+| Sprache | Systemeigene Text-to-Speech-Ausgabe für zeitgesteuerte Hinweise und Countdowns; gesprochenes Feedback mit Transkription | Abschnitte 7, 10 |
+| Historie und Feedback | Tatsächlichen Trainingsverlauf speichern; persönliches Trainingsfeedback und Qualitätsfeedback zur App oder Übung getrennt behandeln | Abschnitte 10, 11, 14 |
+| Austausch mit KI-Werkzeugen | Standardisierter AI-Context-Export; validierte Planvorschläge als DRAFT importieren, prüfen und freigeben | Abschnitte 12, 13 |
+| Privater Betrieb | Backend und PostgreSQL auf der NAS, Zugriff über Tailscale, zusätzliche Anwendungsrechte und wiederherstellbare Sicherungen | Abschnitte 2, 16–18 |
+
+Vorgesehene Ansichten sind Heute, Trainingsplayer, Wochen-/Monatsplan,
+Übungskatalog, Profil und Historie. Verwaltungsfunktionen für Übungen, Import
+und Freigabe sind Administratoren vorbehalten; ihre konkrete Oberfläche ist offen.
+
+### Fachliche Regeln
+
+- Profile und ihre Pläne, Historien und persönlichen Rückmeldungen bleiben
+  getrennt. Ein Benutzer kann Trainingsprofile besitzen; Administratoren
+  können mehrere Profile verwalten. Die genaue Zuordnung wird spezifiziert.
+- Einschränkungen werden strukturiert gespeichert und beim Export mitgegeben.
+  Sie haben bei Planvorschlägen Vorrang und dürfen nicht automatisch entfernt
+  werden. Vorschläge berücksichtigen das verfügbare Equipment.
+- Neue KI-generierte Übungen und Pläne entstehen als Entwurf. Eine
+  automatische produktive Freigabe ist ausgeschlossen. Animationen werden
+  vor ihrer Freigabe auch visuell geprüft.
+- Der Player läuft ohne Bestätigung nach jeder Übung weiter. Ein
+  Feedback-Button ermöglicht eine kontrollierte Rückmeldung; ohne Betätigung
+  läuft das Training weiter. Wiederholen ist im Rohkonzept nur optional.
+- Persönliches Feedback kann Belastung, Eignung, Pausen und Trainingsdauer
+  bewerten und Freitext enthalten. Qualitätsfeedback verändert nicht
+  automatisch einen persönlichen Trainingsplan.
+- Bei Spracheingabe wird vorzugsweise die Transkription gespeichert.
+  Eine dauerhafte Audioaufbewahrung ist standardmäßig nicht vorgesehen.
+- Folgepläne berücksichtigen Historie und individuelles Feedback. Progression
+  erfolgt schrittweise und nachvollziehbar; negative Rückmeldungen führen
+  eher zu Reduktion oder Alternativen. Konkrete Regeln bleiben zu spezifizieren.
+
+### Abgrenzung
+
+Zum MVP gehören keine direkten KI-Abfragen aus der mobilen App, kein
+MCP-Direktzugriff auf Produktivdaten, keine automatische Planfreigabe,
+keine öffentliche Bereitstellung für beliebige Nutzer, kein komplexes
+Social-System, keine automatische medizinische Bewertung und keine
+vollständige Gamification.
+
+Offline-Synchronisation, öffentliche Registrierung, Push-Nachrichten,
+Kalender, Wearables, Herzfrequenzdaten, weitergehende Statistiken,
+gemeinsames Training und eine Coach-Rolle sind spätere Möglichkeiten.
+Auch eine zusätzliche Textanzeige der gesprochenen Hinweise ist im Rohkonzept
+erst später vorgesehen. KI-Unabhängigkeit legt noch keinen vollständigen
+Offlinebetrieb fest; das Verhalten bei Netzausfall bleibt offen.
 
 ## Architektur
 
-```text
-.devcontainer/   Entwicklungsumgebung und lokale Dienstzusammenschaltung
-.github/         GitHub Actions, Issue-/PR-Vorlagen und gewählte Integration
-.specify/        Constitution, Vorlagenanpassungen und Entwicklungsworkflow
-.vscode/         Gemeinsame Editor-Einstellungen und Prüfaufgabe
-config/          Projektmetadaten, Referenz-Repos und Dienstkonfiguration
-docs/            DV-Konzept, ursprüngliche Unterlagen und Entscheidungen
-specs/           Spezifikation, Plan und Aufgaben je Feature
-scripts/         Erzeugung, Einrichtung, Prüfungen und Beitragsvorbereitung
-templates/       Technologieprofile, Dienste und zusammengesetzte Rezepte
-tests/           Tests des Template-Generators und seiner Zugriffsregeln
+### Systemkontext und Zielarchitektur
+
+```mermaid
+flowchart LR
+    Mobile["Android / iOS: React Native, Expo, TypeScript"]
+    subgraph NAS["Private NAS"]
+        API["FastAPI / Python im Docker-Container"]
+        DB[("PostgreSQL im eigenen Container")]
+        Media["Animationsdateien"]
+    end
+    Mobile -->|"Tailscale: API-Zugriff"| API
+    API --> DB
+    API --> Media
 ```
 
-### Zuständigkeiten und maßgebliche Dateien
+Die mobile App greift ausschließlich über FastAPI auf Anwendungsdaten zu.
+Die Datenbank wird nicht öffentlich bereitgestellt. Der Zugriff auf die
+private Infrastruktur erfolgt zunächst über Tailscale; die API prüft zusätzlich
+Anmeldung, Rolle und Profilberechtigungen. Transportabsicherung und
+Medienauslieferung werden vor der ersten Bereitstellung konkretisiert.
 
-| Inhalt | Ablage |
+| Komponente | Festgelegte Richtung | Noch auszuarbeiten |
+| --- | --- | --- |
+| Mobile App | React Native, Expo und TypeScript; gemeinsame Codebasis für Android/iOS | Versionen, Build-/Verteilungsweg, unterstützte Geräte und Betriebssysteme |
+| Backend | Python und FastAPI im Docker-Container auf der NAS | Paketstruktur, Authentifizierung, Datenzugriff, Migrationen |
+| Datenbank | PostgreSQL im eigenen Container | Version, Schema, Migrationswerkzeug, Betriebsparameter |
+| Medien | Lottie/dotLottie, kurze skalierbare Animationen ohne Ton | Player-Bibliothek, Asset-Herkunft, Versionierung, Auslieferung |
+| Sprachhinweise | Systemeigene TTS-Funktion des Smartphones | Sprachen, Zeitsteuerung und Verhalten bei Unterbrechungen |
+| Sprachfeedback | Aufnahme und Speech-to-Text, bevorzugt Transkription speichern | Umsetzung und Plattformunterstützung ohne verpflichtende KI-Cloud |
+| KI-Unterstützung | Exportdateien und Vorschläge außerhalb des App-Betriebs | Export-/Importschemata und Freigabebedienung |
+
+MP4 ist nur als spätere Medienalternative vorgesehen; GIF ist kein Zielformat.
+Keycloak, Prometheus und Grafana sind im Template als optionale Bausteine
+vorhanden, aber für die Sport-App bislang nicht ausgewählt.
+
+### Repository und Dokumentationszuständigkeit
+
+Die vorhandenen Verzeichnisse behalten zunächst ihre Funktion:
+
+| Ablage | Inhalt |
 | --- | --- |
-| Gemeinsame Prinzipien | `.specify/memory/constitution.md` |
-| Projektbeschreibung | Dieses Dokument |
-| Konkrete Feature-Anforderung | `specs/<nummer>-<name>/spec.md` |
-| Technischer Feature-Plan und Aufgaben | `plan.md` und `tasks.md` im Feature |
-| Rohmaterialien | `docs/raw-materials/` |
-| Aktive Konfiguration | `config/` und die ausgewählten Werkzeugdateien |
-| Lokale Secrets | Ignorierte `.env`, niemals Git |
-| Versions- und Profilnachweis | `config/project.yaml` |
+| `docs/DV_KONZEPT.md` | Verbindliches Projektziel, Architektur, Entwicklung und Betrieb |
+| `docs/raw-materials/` | Ursprüngliche Unterlagen als Eingabe |
+| `.specify/memory/constitution.md` | Übergeordnete Prinzipien |
+| `specs/<nummer>-<name>/` | Fachliche Spec, technischer Plan, Aufgaben und gegebenenfalls Verträge |
+| `config/` | Projektmetadaten und Referenzkonfiguration |
+| `.devcontainer/`, `.github/` | Entwicklungsumgebung und CI |
+| `scripts/`, `templates/`, `tests/` | Übernommene Werkzeuge, Bausteine und deren Tests |
 
-`config/project.yaml` und `config/repositories.yaml` sind Konventionen dieses
-Templates. Spec Kit wertet sie nicht selbst aus. Die Integrationsmetadaten
-unter `.specify/integration.json` und `.specify/integrations/` erzeugt dagegen
-die Specify CLI bei der Initialisierung. Sie werden nicht von Hand erfunden.
+Das Rohkonzept schlägt `app/`, `backend/`, `schemas/`, `examples/`,
+`ai-context/` und `proposals/` vor. Diese Anwendungsstruktur ist noch nicht
+angelegt oder abschließend beschlossen (O-01). Export- und Vorschlagsdaten mit
+Personenbezug gehören außerhalb versionierter Beispieldaten abgelegt.
+Der Generator ist ein vorhandenes Werkzeug für leere Zielverzeichnisse;
+er wird nicht zum Überschreiben dieses bestehenden Projekts eingesetzt.
 
-### Bausteine
+## Daten und Schnittstellen
 
-Der Generator kopiert einen ausdrücklich festgelegten Kern und ausgewählte
-`files/`-Verzeichnisse. `module.yaml` ergänzt Prüfkommandos, Laufzeiten,
-Umgebungsvariablen und Ports. Dienstbausteine liefern Compose-Fragmente.
-`.template`-Dateien werden beim Kopieren umbenannt und Platzhalter ersetzt.
+### Fachliche Datenhaltung
 
-Das Ziel muss leer sein. Der Generator überschreibt keine bestehenden
-Projektdateien und führt weder Installation noch Git-Initialisierung, Push,
-Issue-Erstellung oder Spec-Kit-Initialisierung aus.
+| Datenbereich | Inhalt und Zusammenhang |
+| --- | --- |
+| Benutzer | Anmeldung, Rolle und Aktivstatus; getrennt vom Trainingsprofil |
+| Profil | Ziele, Einschränkungen, Equipment, Trainingsniveau und Präferenzen |
+| Übung | Metadaten, Ausführung, Animation, Hinweise, Alternativen und Aktivstatus |
+| Trainingsplan | Genau ein Profil, Zeitraum, geplante Einheiten, Übungen/Pausen und Freigabestatus |
+| Trainingseinheit | Profil, Plan, Datum/Zeit, tatsächlich ausgeführte oder übersprungene Übungen, Dauer und Unterbrechungen |
+| Feedback | Persönliche Rückmeldung mit Profil-/Session-/Übungsbezug beziehungsweise getrenntes Qualitätsfeedback |
+| Medien | Dateien auf der NAS; Datenbank enthält Asset-ID, Pfad/URL und Metadaten |
 
-Der Anwendungscode folgt dem Profil: Python `src/app/` und `tests/`,
-TypeScript `src/` und `tests/`, Maven `src/main/java/` und `src/test/java/`.
-`.mvn/` und Maven Wrapper werden erst bei Bedarf im Java-Projekt ergänzt.
-Ein Monorepo kann stattdessen `apps/` und `packages/` verwenden.
+Das konkrete Schema, Pflichtfelder, IDs, Einheiten und Versionen werden je
+Feature definiert. Die Planstatus `DRAFT`, `APPROVED`, `ACTIVE` und
+`ARCHIVED` sind das Ausgangsmodell aus dem Rohkonzept; Übergänge und
+Berechtigungen werden im Planungsfeature präzisiert.
 
-### Devcontainer und Dienste
+Der Player soll seinen Zustand mit Session, aktueller Übung, verbleibender
+Zeit, Pausenstatus und abgeschlossenen Übungen speichern können. Regeln
+für Wiederaufnahme nach App-Neustart oder Verbindungsabbruch bleiben offen.
+Historische Ergebnisse müssen erkennen lassen, was tatsächlich trainiert wurde.
 
-Der Container startet über `.devcontainer/compose.yaml`. Das Python-Basisimage
-stellt die gemeinsamen Werkzeuge bereit; Features ergänzen Node oder Java nur
-im gewählten Profil. Die Specify CLI ist auf 1.0.7 festgelegt.
+### API und Austauschformate
 
-PostgreSQL, Keycloak, Prometheus und Grafana laufen bei Auswahl als separate
-Container. Die ausgewählten Services stehen ausdrücklich in `runServices`.
-Persistente Daten liegen in benannten Volumes. Entwicklungsdienste veröffentlichen
-keine Host-Ports; benötigte Oberflächen werden über VS Code weitergeleitet.
+Vorgesehen sind API-Bereiche für Anmeldung, Profile, Übungen, Pläne, heutiges
+Training, Sessionsteuerung, Feedback, Historie sowie Kontext-Export und
+Planimport. Die Routenliste aus Abschnitt 15 des Rohkonzepts ist ein Vorschlag.
+Konkrete Endpunkte, Fehlerantworten, Validierung und Zugriffsrechte werden als
+Verträge im jeweiligen Feature geplant und mit Implementierungstests abgeglichen.
 
-Keycloak verwendet ausschließlich den Entwicklungsmodus. Das mitgelieferte
-Realm enthält noch keine Anwendungsclients oder Benutzer. Das Grafana-Dashboard
-zeigt zunächst die Erreichbarkeit der Prometheus-Ziele; Anwendungsmetriken
-werden bei einem entsprechenden Feature ergänzt.
+Ein AI-Context-Paket soll eine Erläuterung sowie strukturierte Daten zu Profil,
+Zielen, Einschränkungen, Equipment, freigegebenen Übungen, aktuellem Plan,
+Historie und Feedback enthalten. Der Export erlaubt externen KI-Werkzeugen
+die Planung ohne direkten Produktionsdatenbankzugriff.
 
-Grafana-Dashboards und Provisionierung liegen im erzeugten Projekt unter
-`config/observability/`. Anwendungsmigrationen gehören nach `db/migrations/`,
-Produktionsartefakte nach `deploy/`.
+Der vorgesehene Ablauf ist: Export → externer Planvorschlag → Validierung und
+Review → Import als DRAFT → ausdrückliche Freigabe → Aktivierung.
+Ungültige oder nicht freigegebene Inhalte dürfen keinen aktiven Plan ersetzen.
+Schemas, Versionsverträglichkeit, Konfliktbehandlung und Exportumfang sind offen.
 
 ## Einrichtung
 
-### Voraussetzungen
+### Vorhandene Arbeitsumgebung
 
-- Python ab 3.11 für Generator und gemeinsame Prüfungen.
-- Git; für GitHub-Aktionen zusätzlich die GitHub CLI und eine Anmeldung.
-- Für Container: Docker mit Compose und eine Dev-Containers-fähige Umgebung.
-- Für lokale Referenzen: ein vorhandenes Verzeichnis mit den anderen Repositories.
+Für die gemeinsamen Werkzeuge werden Python ab 3.11 und Git benötigt.
+Im Repository:
 
-Im Template-Verzeichnis:
-
-```sh
+```powershell
 python -m pip install -r scripts/requirements.txt
-python scripts/create_project.py --help
+python scripts/check.py
 ```
 
-### Neues Projekt erzeugen
-
-```sh
-python scripts/create_project.py --name mein-projekt --stack python --output ../mein-projekt
-python scripts/create_project.py --name meine-api --recipe api-service --service observability --output ../meine-api
-```
-
-Weitere Profile: `--stack typescript`, `--stack java-maven` oder `--stack none`.
-Dienste werden mit wiederholtem `--service postgres`, `--service keycloak` und
-`--service observability` ausgewählt. `--dry-run` zeigt die geplanten Dateien.
-
-Das erzeugte Projekt enthält seinen eigenen Einstieg und sein DV-Konzept.
-Template-Katalog, Generator-Tests und hiesige Rohmaterialien werden nicht
-übernommen. So fließt das Sport-App-Konzept nicht in fachfremde Projekte ein.
-
-Bei Verwendung von GitHubs „Use this template“ zunächst die neue Kopie als
-Generator öffnen und das ausgewählte Projekt in ein leeres Ziel ausgeben.
-Ein Umbau eines bereits gefüllten Arbeitsverzeichnisses wird bewusst nicht
-automatisch durchgeführt.
+Diese Befehle richten die vorhandenen Prüfwerkzeuge ein und prüfen das
+Grundgerüst. Ein Startbefehl für die Sport-App wird mit dem ersten
+lauffähigen Feature ergänzt. Node-/Expo- und Backend-Abhängigkeiten sind
+noch nicht als Anwendungsumgebung eingerichtet.
 
 ### Lokaler Container und Referenz-Repositories
 
-Im zu öffnenden Projekt unter Windows:
+Für den optionalen Devcontainer werden Docker mit Compose und eine
+Dev-Containers-fähige Umgebung benötigt. Unter Windows auf dem Host:
 
 ```powershell
 python scripts/container_init.py --references-root C:\Git
 ```
 
-Unter Linux/macOS entsprechend:
+Danach kann das Projekt in VS Code mit „Reopen in Container“ geöffnet werden.
+Das Skript erhält bestehende lokale Werte, erstellt `.env` bei Bedarf und
+erzeugt lokale Passwörter für entsprechende Platzhalter. Der aktuelle Container
+startet nur `dev`; Backend und PostgreSQL werden erst im technischen Feature ergänzt.
 
-```sh
-python scripts/container_init.py --references-root /pfad/zu/repos
-```
+Die ignorierte `.devcontainer/local.json` merkt sich den Hostpfad.
+`compose.local.yaml` bindet Referenz-Repositories unter `/references/repos`
+nur lesbar ein; alternativ kann `REFERENCE_REPOS_ROOT` gesetzt werden.
+Das aktuelle Projekt bleibt unter `/workspaces/project` schreibbar.
+Der Container erhält keinen Host-Docker-Socket; Compose-Verwaltung erfolgt
+auf dem Host. Referenzen können auf bereinigte Klone ohne lokale Secrets
+beschränkt werden.
 
-Danach „Reopen in Container“ in VS Code ausführen. Das Startskript erstellt
-`.env` nur, wenn sie fehlt, und ersetzt `__GENERATE__` durch zufällige lokale
-Passwörter. Bestehende Werte werden erhalten.
-
-`.devcontainer/local.json` merkt sich den Hostpfad; das ignorierte
-`compose.local.yaml` bindet ihn unter `/references/repos` mit `read_only: true`
-ein. Alternativ setzt der Host `REFERENCE_REPOS_ROOT`. Keine Zugangsdaten in
-diese Pfadkonfiguration schreiben.
-
-Das aktuelle Projekt ist separat unter `/workspaces/project` schreibbar.
-Der Referenz-Mount schützt die anderen Hostdateien vor Änderungen. Er erlaubt
-weiterhin Lesen: Für einen bereinigten Kontext kann statt des gesamten
-Arbeitsverzeichnisses eine Sammlung von Referenzklonen ohne lokale Secrets
-eingebunden werden.
-
-Der Container erhält keinen Host-Docker-Socket. Compose-Start und Verwaltung
-der Nachbardienste erfolgen auf dem Host.
-
-### Codespaces
-
-Codespaces kann `C:\Git` nicht mounten. Dort keinen lokalen Referenzpfad setzen.
-Die Konfiguration fordert für `maieuticus/*` nur `contents: read` und
-`issues: write` an. Das aktuelle Arbeitsrepository hat seine eigenen Rechte.
-Beim Wechsel des GitHub-Owners sowohl `config/repositories.yaml` als auch
-`customizations.codespaces.repositories` anpassen.
-
-Andere Repositories können im Codespace über `gh repo view OWNER/REPO` gelesen
-oder in ein separates Referenzverzeichnis geklont werden. Der Token beschränkt
-Schreibzugriffe auf die Remotes; solche lokalen Klone sind dadurch noch kein
-schreibgeschützter Dateisystem-Mount. Für lokale Devcontainer müssen GitHub-
-Zugangsdaten separat mit entsprechend begrenztem Umfang eingerichtet werden;
-die Codespaces-Einstellungen beschränken keine weitergereichten Host-Tokens.
+Codespaces ist im Rohkonzept als bevorzugte reproduzierbare Lauf- und
+Testumgebung vorgesehen. Dort keinen Windows-Referenzpfad setzen.
+Die vorhandene Konfiguration fordert für `maieuticus/*` `contents: read`
+und `issues: write` an. Das ist keine Veröffentlichungsfreigabe.
+Referenzklone und tatsächliche Tokenrechte sind getrennt zu prüfen.
 
 ### Spec Kit initialisieren
 
-Im Container ist die festgelegte CLI installiert. Außerhalb kann `uvx` verwendet
-oder `python -m pip install specify-cli==1.0.7` ausgeführt werden.
+Spec Kit ist laut `.specify/integration.json` bereits in Version 1.0.7 für
+Codex mit PowerShell und dem Aufrufseparator `-` eingerichtet.
+Die Skills liegen unter `.agents/skills/speckit-*/`; die Constitution besteht.
+Für dieses Arbeitsverzeichnis ist keine erneute Initialisierung erforderlich.
 
-```sh
-python scripts/init_speckit.py --integration copilot
-```
-
-Das Skript initialisiert die gewählte Integration, lässt die Constitution
-unverändert und verwendet die Bash-Skripte für die Arbeit im Linux-Container.
-Andere unterstützte Integrationen können über `--integration` ausgewählt werden.
-Die konkreten Agent-Dateien und Manifeste erzeugt Spec Kit.
-
-Die lokalen Vorlagenanpassungen bleiben unter `.specify/templates/overrides/`.
-Bei bereits initialisierten Projekten das Updateverfahren verwenden, nicht
-erneut blind initialisieren.
+Der vorhandene Linux-Devcontainer und `scripts/init_speckit.py` stammen
+aus dem Template; das Initialisierungsskript ist auf Bash ausgelegt.
+Ein Wechsel der Entwicklungsumgebung muss die Skriptwahl berücksichtigen.
+Bestehende Integration, Constitution und lokale Vorlagenanpassungen unter
+`.specify/templates/overrides/` dürfen dabei nicht blind überschrieben werden.
 
 ## Entwicklung
 
 ### Ablauf je Feature
 
-1. Rohmaterial und relevantes Wissen lesen; Projektziel im DV-Konzept klären.
-2. Ein abgegrenztes Feature mit Akzeptanzkriterien spezifizieren.
-3. Unklare Anforderungen klären und die technische Umsetzung planen.
-4. Aufgaben aus Plan und Spec ableiten; Konsistenz prüfen.
-5. Implementieren und relevante Tests ausführen.
-6. Ergebnis gegen die Akzeptanzkriterien prüfen; Lücken nacharbeiten.
-7. Betroffene Abschnitte dieses Konzepts aktualisieren und den Diff prüfen.
+1. Relevante Anforderungen und offene Entscheidungen aus diesem Konzept lesen.
+2. Ein Feature unter `specs/<nummer>-<name>/` mit überprüfbaren
+   Akzeptanzkriterien spezifizieren und fachliche Unklarheiten klären.
+3. Technische Umsetzung, Schnittstellen, Datenänderungen und Tests planen.
+4. Aufgaben ableiten und Spec, Plan und Aufgaben auf Konsistenz prüfen.
+5. Implementieren, automatisiert prüfen und in der Zielumgebung starten.
+6. Funktion manuell ansehen, Rückmeldungen einarbeiten und Abweichungen dokumentieren.
+7. DV-Konzept aktualisieren, Diff prüfen und das Arbeitspaket zur Abnahme vorlegen.
 
-Der lokale Workflow liegt unter
-`.specify/workflows/project-sdd/workflow.yml`:
+Die installierten Schritte sind `speckit-specify`, `speckit-clarify`,
+`speckit-plan`, `speckit-tasks`, `speckit-analyze`,
+`speckit-implement` und `speckit-converge`. Der letzte Schritt kann neue
+Aufgaben erzeugen; anschließend sind Umsetzung und Prüfung zu wiederholen.
 
-```sh
-specify workflow run .specify/workflows/project-sdd/workflow.yml -i spec="Ein abgegrenztes Feature"
-```
+Der übernommene Workflow unter `.specify/workflows/project-sdd/workflow.yml`
+automatisiert mehrere Schritte und endet mit einem Review. Fachliche
+Unklarheiten müssen vor einem solchen Lauf geklärt sein. Der Ablauf aus
+dem Rohkonzept sieht nach größeren Arbeitspaketen eine Nutzerabnahme vor,
+bevor die nächste Phase beginnt. Abnahmen und Commits sind gesondert
+nachzuweisen; ein erfolgreicher Agentenlauf ersetzt sie nicht.
 
-Vor dem automatisierten Lauf müssen fachliche Unklarheiten geklärt sein.
-`converge` kann weitere Aufgaben erzeugen. Der abschließende Review prüft diese
-Aufgaben; ein durchgelaufener Workflow allein bedeutet keine fachliche Abnahme.
-Bei Lücken Implementierung, Prüfungen und Abgleich wiederholen.
+Jeder Implementierungsauftrag nennt Umgebung, geeignetes verfügbares Modell,
+Begründung, erwartetes Ergebnis sowie automatische und manuelle Prüfungen.
+Konkrete Modelle werden je Arbeitspaket ausgewählt, nicht hier dauerhaft festgelegt.
 
-### Gemeinsame Prüfungen
+### Teststrategie und gemeinsame Prüfungen
 
-```sh
+```powershell
 python scripts/check.py
 python scripts/check.py --static-only
 ```
 
-Das Skript prüft lokale Dokumentlinks, Anker, Python-/JSON-/YAML-Syntax und
-unzulässige parallele Konzeptdokumente. Danach führt es die Argumentlisten aus
-`config/project.yaml` ohne Shell aus. Im Template sind das die Generator-Tests,
-im erzeugten Projekt die jeweiligen Anwendungstests.
+Das Skript prüft Dokumentlinks, Anker, Python-/JSON-/YAML-Syntax und den
+zentralen Dokumentationsvertrag. Anschließend führt es die Prüfungen aus
+`config/project.yaml` aus: derzeit die neun Template-Tests.
 
-Die CI prüft zusätzlich generierte Python-, TypeScript-, Maven- und API-Projekte,
-Compose-Konfigurationen sowie den Bau der Entwicklungsimages. API-CI verwendet
-eine wegwerfbare PostgreSQL-Datenbank und übernimmt ihre Werte aus genau einer
-`.env.test.example`. Ein nicht ausgeführter Containerstart darf nicht als
-erfolgreich geprüft dokumentiert werden.
+Mit der Anwendung werden die folgenden Prüfungen in Aufgaben und CI ergänzt:
 
-### API-Rezept
+| Bereich | Geplante Prüfung |
+| --- | --- |
+| Backend | Fachlogik, API-Verträge, Eingabevalidierung, Profil-/Rollenrechte und Fehlerfälle |
+| Datenbank | Reale PostgreSQL-Integration, Migrationen und nachvollziehbare Wiederherstellung |
+| Mobile App | Komponenten, Navigation, Profilwechsel, API-Fehler und Datenzuordnung |
+| Trainingsplayer | Zustandswechsel, Timer, Pause/Fortsetzen, Überspringen, Abbruch und Sprachzeitpunkte |
+| Geräte | Animation, TTS, Mikrofon und Unterbrechungen auf vereinbarten Android-/iOS-Testgeräten |
+| Austausch | Export-/Importschema, Einschränkungen, Entwurfsstatus und Freigabeschutz |
+| Gesamtablauf | Profil → heutiges Training → Übung/Sprachhinweis → Pause → nächste Übung → Sprachfeedback → Abschluss → Historie |
 
-Das Rezept enthält eine minimale `/health`-Route, einen eingecheckten OpenAPI-
-Vertrag und Tests für Vertrag/Implementierung und interne Referenzen.
-`/health` ist ein Liveness-Check, kein Nachweis der Datenbankbereitschaft.
-Ein eigener Datenbanktest läuft mit `RUN_DATABASE_TESTS=1`; sonst wird er
-sichtbar übersprungen.
+Prüfungen verwenden synthetische oder anonymisierte Daten und getrennte
+Testdatenbanken. Nicht ausgeführte Geräte-, Container-, Datenbank- oder
+manuelle Tests werden ausdrücklich benannt.
 
-API-Änderungen planen Vertrag, Verbraucher, Validierung und Fehlerfälle.
-Datenänderungen planen Migration, Backup und Rückweg. Nach dem ersten
-Abhängigkeitsabgleich einen geeigneten Lock-/Constraint-Stand festhalten.
+### Entwicklungsfahrplan
+
+Die Phasen aus dem Rohkonzept dienen als Reihenfolge und werden bei Bedarf
+in kleinere Features zerlegt.
+
+| Phase | Ziel und überprüfbares Ergebnis |
+| --- | --- |
+| 0 | Vorhandenes Grundgerüst für die App konkretisieren und in frischer Umgebung starten |
+| 1 | Backend-Grundgerüst mit Health-Endpunkt, Datenbankanbindung, Migrationen und Basistests |
+| 2 | Benutzer/Profile, Ziele, Einschränkungen, Equipment und Katalogdaten mit Beispieldaten verwalten |
+| 3 | Übungs-API, Schema und drei bis fünf geprüfte Beispielübungen mit Lottie-Assets |
+| 4 | App-Grundgerüst zeigt Profile und Beispielübungen über die API |
+| 5 | Beispielplan mit Wochen-/Monatsansicht und Planstatus |
+| 6 | Beispielsession mit Animation, Timer, automatischen Pausen und Abschluss |
+| 7 | Sprachhinweise zu den vorgesehenen Zeitpunkten |
+| 8 | Persönliches und Qualitätsfeedback einschließlich korrekt zugeordneter Spracheingabe |
+| 9 | Vollständig nachvollziehbare absolvierte Trainings |
+| 10 | Validierter AI-Context-Export, der ohne Datenbankzugriff verständlich ist |
+| 11 | Externer vierwöchiger Testplan lässt sich als Entwurf importieren und anzeigen; Freigabeweg prüfen |
+| 12 | Nachvollziehbar unterschiedliche Folgepläne aus Beispielhistorien und Feedback |
+
+## Erster Funktionsumfang
+
+**Spezifiziert als [002 – Backend-Grundgerüst](../specs/002-backend-foundation/spec.md):**
+„Backend lokal starten und Datenbankverbindung prüfen“. Die Anforderungen
+sind geprüft; technischer Plan, Aufgaben und Umsetzung stehen noch aus.
+
+Das Repository besitzt noch keine Anwendungsbasis. Ein kleines technisches
+Arbeitspaket entsprechend Phase 1 schafft die Voraussetzung für die
+anschließende fachliche Profilverwaltung. Es kann die dafür notwendigen
+Restarbeiten aus Phase 0 aufnehmen. `001-template-foundation` bleibt erhalten;
+das neue Feature verwendet die fortlaufende Nummer `002`.
+
+In die Spezifikation übernommener Umfang:
+
+- Projektspezifisches FastAPI-Backend lokal starten und `GET /health` bereitstellen.
+- PostgreSQL für Entwicklung und Tests über Konfiguration anbinden.
+- Migrationsverwaltung mit einer reproduzierbaren Baseline einrichten.
+- Relevante API-, Datenbank- und Migrationstests in die gemeinsame Prüfung aufnehmen.
+- Metadaten, Anwendungsverzeichnisse und Startanleitung auf den tatsächlich
+  implementierten Umfang abstimmen.
+
+In der Spezifikation konkretisierte Abnahmekriterien:
+
+1. Eine frische Entwicklungsumgebung kann Backend und PostgreSQL nach der
+   dokumentierten Anleitung starten.
+2. `GET /health` liefert HTTP 200 und einen dokumentierten Health-Status.
+   Der erfolgreiche HTTP-Aufruf allein gilt nicht als Datenbanknachweis.
+3. Ein separater Integrationstest erreicht eine echte PostgreSQL-Testdatenbank.
+   Ein Verbindungsfehler wird erkennbar gemeldet und nicht als Erfolg gewertet.
+4. Die Migrationsbaseline lässt sich auf eine leere Testdatenbank anwenden;
+   ein erneuter Lauf verursacht keine ungewollten Änderungen.
+5. `python scripts/check.py` prüft die neu hinzugekommenen Bestandteile;
+   ein erforderlicher, aber nicht ausgeführter Datenbanktest ist sichtbar.
+6. Ein manueller Start- und Health-Test wird mit Ergebnis dokumentiert.
+
+Dieses erste Paket umfasst noch keinen Trainingsplayer, Übungskatalog oder
+KI-Workflow. Benutzerrechte und Profilfunktionen erhalten ein eigenes
+Folgefeature. Als erster fachlicher Umfang bietet sich das Anlegen,
+Bearbeiten und Auswählen berechtigter Trainingsprofile an; vor dessen
+Umsetzung ist O-02 zu klären. Der Gesamtumfang des MVP bleibt davon unberührt.
+
+## Offene Entscheidungen
+
+Alle Einträge haben den Status **offen**. Sie werden in der jeweiligen
+Spezifikation fachlich geklärt und im technischen Plan entschieden.
+Die bereits festgelegten Technologien bleiben dabei der Ausgangspunkt.
+
+| ID | Zu klären | Spätestens vor |
+| --- | --- | --- |
+| O-01 | Anwendungsstruktur für Mobile und Backend; Umgang mit Template-Bestand, Metadaten und CI; Windows-/Container-Skriptwahl | Plan des ersten technischen Features |
+| O-02 | Anmeldeverfahren, Benutzeranlage, Sitzungen, Rollenmatrix, Anzahl/Zuweisung von Profilen und Verwaltungsrechte; konkrete Rollennamen sind bisher Beispiele | Benutzer-/Profilfeature |
+| O-03 | Unterstützte Versionen, Abhängigkeitsbindung, Datenzugriff und Migrationswerkzeug; Datenbankbereitschaft und Fehlerverhalten | Backend-Plan |
+| O-04 | Pflichtfelder, Einheiten, Zeitzonen, Planüberschneidungen, Statusübergänge und Versionierung historischer Übungs-/Plandaten | Datenmodell und Trainingsplanung |
+| O-05 | Player-Verhalten bei Hintergrundbetrieb, App-Neustart und Netzausfall; Wiederaufnahme, Wiederholungsübungen und Zusammenspiel von Timer, Animation und TTS | Trainingsplayer |
+| O-06 | Speech-to-Text ohne verpflichtende KI-Cloud; Sprachen, Plattformunterstützung, Mikrofonrechte, Fehlerfälle und genaue Unterbrechung durch den Feedback-Button | Sprachfeedback |
+| O-07 | Lottie-/dotLottie-Unterstützung, Asset-Erstellung und Nutzungsrechte, visuelle Prüfung, Medienauslieferung und Aktualisierung | Übungskatalog und App-Plan |
+| O-08 | Exportumfang und bewusste Weitergabe persönlicher Daten an externe KI-Werkzeuge; Aufbewahrung/Löschung von Historie, Feedback, Audio und Exporten; Importkonflikte und Schema-Versionen | Personenbezogene Speicherung beziehungsweise Export-/Importfeature |
+| O-09 | NAS-Plattform, Containerarchitektur, Tailscale-Zugriffsregeln, Transportabsicherung, Secrets, Backupziel/-aufbewahrung, Wiederherstellungsziele, Zuständigkeit und Überwachung | Erste NAS-Bereitstellung |
+| O-10 | Unterstützte Android-/iOS-Versionen, Testgeräte, Build- und privater Verteilungsweg; messbare Qualitätsziele | App-Grundgerüst |
+| O-11 | Konkrete Regeln für sichere, nachvollziehbare Belastungsanpassung unter Vorrang der Einschränkungen; Prüfung und Freigabe von Folgeplänen | Progressionsfeature |
 
 ## Betrieb
 
-### Lokale Entwicklungsdienste
+### Geplanter Anwendungsbetrieb
+
+FastAPI und PostgreSQL sollen als getrennte Docker-Container auf der privaten
+NAS laufen. Medien werden dort als Dateien gespeichert. Produktive Daten,
+Testdaten und lokale Entwicklungsdaten erhalten getrennte Konfigurationen.
+Konkrete Start-, Update- und Wiederherstellungsbefehle werden erst mit einem
+geprüften Deployment ergänzt; derzeit existiert kein Sport-App-Deployment.
+
+Die Anwendungsrechte müssen unabhängig vom privaten Netzwerkzugang wirksam sein.
+Normale Benutzer greifen auf ihre berechtigten Profile, Trainings und
+Rückmeldungen zu. Administratoren verwalten Profile, Übungen und Planfreigaben
+sowie Qualitätsfeedback. Die genaue Rechteverteilung bleibt O-02.
+
+### Datenschutz, Secrets und Datenänderungen
+
+Reale Zugangsdaten und persönliche Trainingsdaten gehören nicht in Git.
+Entwicklung und Tests verwenden synthetische Profile, Beispieldaten oder
+anonymisierte Historien. Secrets werden über Umgebungsvariablen beziehungsweise
+geeignete lokale Secret-Ablagen bereitgestellt. Ignorierregeln für konkrete
+Export- und Secret-Verzeichnisse werden bei ihrer Einführung geprüft.
+
+API, Import und Export validieren Eingaben und Berechtigungen. Logs sollen
+keine unnötigen sensiblen Daten enthalten. Eine Weitergabe von Exportdaten
+an externe KI-Werkzeuge wird ausdrücklich gestaltet (O-08).
+KI-Werkzeuge verändern keine produktiven Daten direkt.
+
+Schemaänderungen erhalten neue, nachvollziehbare Migrationen.
+Bereits produktiv angewendete Migrationen werden nicht nachträglich verändert.
+Migration, Datensicherung, Validierung und Rückweg werden gemeinsam geplant.
+Eine Testinitialisierung wie das `db/init.sql` des API-Rezepts ist kein
+Produktionsmigrationsverfahren.
+
+### Sicherung und Wiederherstellung
+
+Vorgesehen sind automatische tägliche PostgreSQL-Sicherungen mit mehreren
+Generationen und testbarer Wiederherstellung. Auch Medien müssen im
+Wiederherstellungsverfahren berücksichtigt werden. Backups liegen außerhalb
+des Git-Verzeichnisses. Speicherort, Aufbewahrung, Verantwortlichkeit und
+Wiederherstellungsziele bleiben bis zur Betriebsplanung offen (O-09).
+
+### Vorhandenen Entwicklungscontainer verwalten
 
 Nach `python scripts/container_init.py` auf dem Docker-Host:
 
-```sh
+```powershell
 docker compose -f .devcontainer/compose.yaml -f .devcontainer/compose.local.yaml config --quiet
 docker compose -f .devcontainer/compose.yaml -f .devcontainer/compose.local.yaml ps
 docker compose -f .devcontainer/compose.yaml -f .devcontainer/compose.local.yaml logs --tail 100
 docker compose -f .devcontainer/compose.yaml -f .devcontainer/compose.local.yaml down
 ```
 
-`down` erhält die benannten Volumes. `down --volumes` löscht Dienstdaten und
-gehört nicht zum normalen Arbeitsablauf.
-
-### Deployment und Datenänderungen
-
-Das Template selbst wird nicht produktiv betrieben. Erzeugte Anwendungen
-ergänzen hier ihre konkreten Bereitstellungsschritte, Umgebungen,
-Verantwortlichkeiten, Backups und Wiederherstellungsverfahren.
-
-Das API-Rezept enthält einen Anwendungs-Dockerfile unter `deploy/`.
-Entwicklungs-Keycloak, Testpasswörter und lokale Compose-Dienste sind keine
-Produktionskonfiguration.
-
-Vor einer Schemaänderung werden Datenmodell, Migration, Tests und Rückweg
-gemeinsam geplant. Das ergänzende SQL-Skript des API-Katalogs setzt idempotente
-Migrationen voraus; alternativ ein passendes Migrationswerkzeug wählen.
-`db/init.sql` darf nur eine frische Testdatenbank initialisieren und ist kein
-Produktionsmigrationsverfahren. Ein Backup liegt außerhalb des Git-Verzeichnisses.
-
-### Störungen
+Diese Befehle beziehen sich auf das vorhandene Entwicklungsgrundgerüst.
+`down` erhält benannte Volumes; `down --volumes` würde Dienstdaten löschen.
 
 | Symptom | Prüfung |
 | --- | --- |
 | Containerstart meldet fehlendes Override | `python scripts/container_init.py` auf dem Host ausführen |
 | Referenzordner fehlt | Hostpfad, `local.json` und `REFERENCE_REPOS_ROOT` prüfen |
-| PostgreSQL lehnt Anmeldung ab | Vorhandene Volume-Daten und tatsächliche `.env` vergleichen; neue Env-Werte ändern vorhandene DB-Benutzer nicht automatisch |
-| API-Vertragstest schlägt fehl | Beabsichtigte Vertragsänderung prüfen; Implementierung und Vertrag gemeinsam aktualisieren |
-| Agent-Aufruf fehlt | Installierte Integration und deren Aufrufsyntax prüfen |
+| Agent-Aufruf fehlt | Installierte Integration, Skills und Skriptwahl der Umgebung prüfen |
+| Spätere API ist unerreichbar | Tailscale-Verbindung, Dienstzustand und API-Konfiguration prüfen |
+| Späterer Datenbankzugriff scheitert | Dienstzustand, Konfiguration und vorhandene Volume-Zugangsdaten prüfen; Env-Änderungen ändern vorhandene DB-Benutzer nicht automatisch |
 
 ## Wissensaustausch
 
 | Ergebnis | Ziel |
 | --- | --- |
-| Projektarchitektur und Betrieb | Dieses DV-Konzept |
+| Fachlichkeit, Architektur und Betrieb dieser Sport-App | Dieses DV-Konzept und zugehörige Feature-Artefakte |
 | Allgemeines Technologiewissen | `tech-knowledge-base` |
-| Gemeinsame Infrastrukturkenntnisse | Infrastrukturartikel der Knowledge Base |
-| Wiederverwendbare Dateien und Abläufe | `template-spec-kit` |
+| Wiederverwendbare Werkzeuge, Vorlagen und Abläufe | `template-spec-kit` |
 
-Die Knowledge Base verwendet `tNNNN-…` für Technologien und `iNNNN-…` für
-Infrastruktur. Zuerst bestehende Artikel und ihre `AGENTS.md` lesen. Wissen
-bevorzugt verlinken; relevante Versionen bei Architekturentscheidungen festhalten.
+Andere Repositories sind Referenzmaterial. Für Beiträge gelten ihre eigenen
+Regeln; Änderungen werden in einem separaten Arbeitsklon vorbereitet.
+Der vorhandene Helfer kann dafür verwendet werden:
 
-Ein Verbesserungs-Issue kann bei vorhandenem Auftrag über die GitHub CLI im
-ausdrücklich genannten Repository erstellt werden. Dafür ist kein
-`contents: write` erforderlich.
-
-Für eine konkrete Dateiänderung:
-
-```sh
-python scripts/prepare_contribution.py knowledge --output .artifacts/contributions/knowledge --branch improve/postgres-notes
+```powershell
+python scripts/prepare_contribution.py knowledge --output .artifacts/contributions/knowledge --branch improve/train-me-notes
 ```
 
-Das Skript klont ausschließlich das konfigurierte Ziel und erstellt einen
-Arbeitsbranch. Es veröffentlicht nichts. Nach Prüfung kann der Branch mit
-gezielten Rechten in das Ziel oder einen geeigneten Fork gepusht und ein PR
-erstellt werden. `pull_requests: write` allein erlaubt keinen Branch-Push.
-Die Referenzkopie bleibt unverändert.
+Der Helfer veröffentlicht nichts. Issues, Pushes und Pull Requests erfolgen
+nur im beauftragten Umfang. Projektspezifische Trainingsdaten und Beschreibungen
+werden nicht in das allgemeine Template übernommen.
 
 ## Weiterentwicklung und Versionen
 
-Template-Version und verwendete Spec-Kit-Version stehen in `config/project.yaml`.
-Neue Projekte erhalten zusätzlich den Ausgangscommit; `+working-tree` kennzeichnet
-eine Erzeugung aus noch nicht vollständig eingecheckten Änderungen.
+Die aktuelle Template-Basis ist Version 0.1.0; Spec Kit ist mit 1.0.7
+konfiguriert. Bei der Anwendungsinitialisierung werden Projektmetadaten
+und tatsächlich verwendete Laufzeiten und Abhängigkeiten nachvollziehbar
+fortgeschrieben. Die Technologieauswahl des Rohkonzepts ist noch kein Lockfile.
 
-Template-Updates werden als gezielte Änderungen geprüft. Der Generator ist kein
-Synchronisationswerkzeug für bestehende Anwendungen. Spec-Kit-Updates zunächst
-an einem Testprojekt prüfen; bei bestehenden Integrationen den
-manifestgestützten `specify integration upgrade`-Weg verwenden.
-
-Neu ausgewählte Dienste erst nach Konfigurations- und Startprüfung in den
-Katalog aufnehmen. Projektanforderungen, aktive Konfiguration und dieses
-Dokument bei Änderungen zusammenführen.
+Template-Updates werden als gezielte Änderungen geprüft. Der Generator
+synchronisiert keine bestehenden Projekte. Spec-Kit-Updates werden zuerst
+an einer Testkopie geprüft und über das manifestgestützte Updateverfahren
+übernommen. Bestehende Benutzeränderungen und lokale Einstellungen bleiben erhalten.
 
 ## Prüfstatus
 
-Stand der lokalen Überprüfung am 16.09.2026:
+### Projektgrundlage am 17.09.2026
 
-| Prüfung | Ergebnis |
+`python scripts/check.py` wurde vor und nach der inhaltlichen Überarbeitung
+erfolgreich ausgeführt: Dokumentlinks und Dateisyntax sowie alle neun
+vorhandenen Template-Tests waren erfolgreich.
+
+Anwendungs-, Datenbank-, Geräte- und End-to-End-Tests für die Sport-App
+existieren noch nicht. Docker-/Containerstart, NAS-Betrieb, mobile Builds,
+manuelle App-Abnahme, Spec-Kit-Workflowausführung und GitHub Actions
+wurden in dieser Dokumentationsarbeit nicht ausgeführt.
+
+### Übernommener Nachweis des Templates vom 16.09.2026
+
+Diese Ergebnisse stammen aus dem bisherigen DV-Konzept und sind keine
+neuen Ausführungen oder Nachweise für die Sport-App:
+
+| Prüfung | Damals dokumentiertes Ergebnis |
 | --- | --- |
 | Dokumentlinks, Anker und Python-/JSON-/YAML-Syntax | Erfolgreich |
 | Neun Generator- und Containerkonfigurationstests | Erfolgreich |
@@ -363,24 +553,19 @@ Stand der lokalen Überprüfung am 16.09.2026:
 | Erzeugtes TypeScript-Projekt: Installation, Typprüfung und Node-Test | Erfolgreich |
 | Erzeugtes API-Projekt: Paketbau und API-/Vertragstests | Vier Tests erfolgreich |
 | API-Datenbanktest | Übersprungen; keine laufende PostgreSQL-Testinstanz |
-| Maven-Build | Lokal nicht ausgeführt; JDK/Maven fehlen |
-| Compose-Schema, Image-Bau und Dienststart | Lokal nicht ausgeführt; Docker fehlt |
+| Maven-Build | Nicht ausgeführt; JDK/Maven fehlten |
+| Compose-Schema, Image-Bau und Dienststart | Nicht ausgeführt; Docker fehlte |
 | Spec-Kit-Initialisierung und Workflow-Validierung | CLI-Start durch Windows-Anwendungssteuerung blockiert |
-| GitHub Actions | Konfiguriert, in dieser Sitzung nicht ausgeführt |
+| GitHub Actions | Konfiguriert, in der damaligen Sitzung nicht ausgeführt |
 
-Die noch offenen Laufzeitprüfungen sind in der CI hinterlegt. Syntaxprüfungen
-und Konfigurationstests ersetzen keinen erfolgreichen Containerstart.
+Die inzwischen vorhandenen Integrationsdateien belegen den konfigurierten
+Codex-Stand; sie sind kein nachträglicher Nachweis eines erfolgreich
+durchlaufenen Workflows oder Containerstarts.
 
 ## Quellen
 
-- [Spec-Kit-Anpassungen](https://github.github.io/spec-kit/guides/customization.html)
-- [Spec-Kit-Workflows](https://github.github.io/spec-kit/reference/workflows.html)
-- [Spec-Kit-Integrationen](https://github.github.io/spec-kit/reference/integrations.html)
-- [Spec Kit 1.0.7](https://github.com/github/spec-kit/releases/tag/v1.0.7)
-- [Docker-Bind-Mounts](https://docs.docker.com/engine/storage/bind-mounts/)
-- [Devcontainer-Mounts und Codespaces](https://code.visualstudio.com/remote/advancedcontainers/add-local-file-mount)
-- [Codespaces-Repository-Rechte](https://docs.github.com/en/codespaces/managing-your-codespaces/managing-repository-access-for-your-codespaces)
-- [Maven-Projektstruktur](https://maven.apache.org/guides/introduction/introduction-to-the-standard-directory-layout.html)
-- [TypeScript in Node.js](https://nodejs.org/api/typescript.html)
-- [Keycloak-Container](https://www.keycloak.org/server/containers)
-- [Grafana in Docker](https://grafana.com/docs/grafana/latest/setup-grafana/installation/docker/)
+- [Sport-App: Gesamtkonzept und Implementierungsleitfaden](raw-materials/sport_app_gesamtkonzept_implementierungsleitfaden.md): fachliche und technische Ausgangsentscheidungen.
+- [Constitution](../.specify/memory/constitution.md): verbindliche Entwicklungsprinzipien.
+- [Arbeitsregeln](../AGENTS.md): Umgang mit Projektdateien, Referenzen und Prüfungen.
+- [Projektmetadaten](../config/project.yaml), [Spec-Kit-Integration](../.specify/integration.json) und [Devcontainer](../.devcontainer/devcontainer.json): überprüfter Konfigurationsstand.
+- [Bisheriges Grundgerüst](../specs/001-template-foundation/spec.md) und [Bausteinkatalog](../templates/README.md): übernommene Werkzeuge als Ausgangspunkt.
