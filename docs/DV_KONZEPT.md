@@ -1,6 +1,6 @@
 # DV-Konzept: p0008-train-me
 
-**Stand:** 17.09.2026
+**Stand:** 18.09.2026
 
 **Status:** Projektgrundlage für die Sport-App; Anwendung noch nicht implementiert
 
@@ -66,13 +66,13 @@ Die folgende Zielarchitektur beschreibt den geplanten Ausbau.
 | Projektmetadaten | `config/project.yaml` enthält noch `name: template-spec-kit`, `kind: template`, `stack: none` und `services: []` |
 | Referenzmaterial | Generator, Technologieprofile und API-Rezept unter `scripts/` und `templates/` |
 | Bisheriges Feature | `specs/001-template-foundation/` dokumentiert das übernommene Grundgerüst |
-| Erstes Anwendungsfeature | [002 – Backend-Grundgerüst](../specs/002-backend-foundation/spec.md) spezifiziert; technischer Plan und Umsetzung stehen aus |
+| Erstes Anwendungsfeature | [002 – Backend-Grundgerüst](../specs/002-backend-foundation/spec.md) spezifiziert und [technisch geplant](../specs/002-backend-foundation/plan.md); Aufgaben und Umsetzung stehen aus |
 | Prüfungen und CI | Template-Tests und CI für erzeugte Beispielprojekte |
 | Sport-App | Noch keine mobile Anwendung, kein projektspezifisches Backend und keine produktive Datenbank |
 
 Die Umstellung von Metadaten, Anwendungsverzeichnissen, Abhängigkeiten,
-Devcontainer und CI wird im ersten technischen Feature gemeinsam geplant.
-Die bestehenden Generatorfunktionen bleiben bis dahin erhalten. Ein erfolgreicher
+Devcontainer und CI ist im ersten technischen Feature gemeinsam geplant.
+Die bestehenden Generatorfunktionen bleiben auch beim Ausbau erhalten. Ein erfolgreicher
 Template-Test belegt noch keine lauffähige Sport-App.
 
 ## Fachlicher Umfang
@@ -161,8 +161,8 @@ Medienauslieferung werden vor der ersten Bereitstellung konkretisiert.
 | Komponente | Festgelegte Richtung | Noch auszuarbeiten |
 | --- | --- | --- |
 | Mobile App | React Native, Expo und TypeScript; gemeinsame Codebasis für Android/iOS | Versionen, Build-/Verteilungsweg, unterstützte Geräte und Betriebssysteme |
-| Backend | Python und FastAPI im Docker-Container auf der NAS | Paketstruktur, Authentifizierung, Datenzugriff, Migrationen |
-| Datenbank | PostgreSQL im eigenen Container | Version, Schema, Migrationswerkzeug, Betriebsparameter |
+| Backend | Python 3.13/FastAPI, `backend/src/train_me_backend/`, synchrones SQLAlchemy/psycopg und Alembic geplant; NAS bleibt Betriebsziel | Implementierung, Paket-Locks, Authentifizierung, Produktionsimage |
+| Datenbank | PostgreSQL 17, getrennte Entwicklungs-/Testinstanzen, Alembic-Baseline geplant | Image-Digest bei Umsetzung, fachliches Schema und produktive Betriebsparameter |
 | Medien | Lottie/dotLottie, kurze skalierbare Animationen ohne Ton | Player-Bibliothek, Asset-Herkunft, Versionierung, Auslieferung |
 | Sprachhinweise | Systemeigene TTS-Funktion des Smartphones | Sprachen, Zeitsteuerung und Verhalten bei Unterbrechungen |
 | Sprachfeedback | Aufnahme und Speech-to-Text, bevorzugt Transkription speichern | Umsetzung und Plattformunterstützung ohne verpflichtende KI-Cloud |
@@ -187,11 +187,48 @@ Die vorhandenen Verzeichnisse behalten zunächst ihre Funktion:
 | `scripts/`, `templates/`, `tests/` | Übernommene Werkzeuge, Bausteine und deren Tests |
 
 Das Rohkonzept schlägt `app/`, `backend/`, `schemas/`, `examples/`,
-`ai-context/` und `proposals/` vor. Diese Anwendungsstruktur ist noch nicht
-angelegt oder abschließend beschlossen (O-01). Export- und Vorschlagsdaten mit
+`ai-context/` und `proposals/` vor. Für Feature 002 ist `backend/` mit
+`src/train_me_backend/`, eigenen Tests und Alembic-Migrationen geplant.
+Die übrige Anwendungsstruktur wird in den Folgefeatures entschieden (O-01).
+Noch sind keine Anwendungsverzeichnisse implementiert. Export- und Vorschlagsdaten mit
 Personenbezug gehören außerhalb versionierter Beispieldaten abgelegt.
 Der Generator ist ein vorhandenes Werkzeug für leere Zielverzeichnisse;
 er wird nicht zum Überschreiben dieses bestehenden Projekts eingesetzt.
+
+### Planungsentscheidungen für Feature 002
+
+Der [Backend-Plan](../specs/002-backend-foundation/plan.md) konkretisiert den
+ersten Ausbau. Die folgenden Entscheidungen sind geplant, noch nicht umgesetzt:
+
+- Der vorhandene Python-3.13-Entwicklungscontainer führt Backend und Tests aus.
+  Docker Compose wird auf dem Windows-Host mit PowerShell gesteuert; die
+  bestehende Spec-Kit-Integration bleibt dort erhalten. Linux-CI verwendet
+  dieselben Anwendungscontainer. Weitere Umgebungen benötigen eigene Nachweise.
+- Die Dienste `postgres` und `postgres-test` verwenden PostgreSQL 17 mit
+  getrennten Zugangsdaten und eingeschränkten Anwendungsrollen. Entwicklung
+  erhält ein persistentes Volume, Tests einen ausdrücklich wegwerfbaren Bestand.
+  DB-Ports werden nicht veröffentlicht; die lokale API bindet an Loopback-Port 8000.
+- FastAPI/Uvicorn, SQLAlchemy 2, psycopg 3 und Alembic bilden das Backend.
+  pip-tools erzeugt vollständig gebundene Runtime-/Testabhängigkeiten mit Hashes;
+  Image-Digests und Paketpatchstände werden bei der Umsetzung tatsächlich aufgelöst.
+- `GET /health` liefert ausschließlich `{"status":"ok"}` ohne Datenbankzugriff.
+  Eine eigene CLI prüft `SELECT 1`, führt Migrationen aus und liest ihren Stand.
+  Verbindungsprüfungen haben ein 10-Sekunden-Prozessbudget; Migrationen 30 Sekunden.
+- Revision `0001_baseline` enthält keine fachlichen Tabellen. Nur ein wirklich
+  ausgeführtes Alembic-Upgrade gilt als Nachweis. Tests prüfen Wiederholung,
+  Datenbestandserhalt und Fehler an der getrennten Testinstanz.
+- Der Generator erhält seine bisherige generische Containerbasis unter
+  `templates/base/files/.devcontainer/`, damit die Anwendungsdienste nicht
+  in erzeugte Beispielprojekte gelangen. Bestehende Tests und Generatorjobs bleiben.
+- `python scripts/check.py` wird um Backend-/DB-/Migrationstests ergänzt.
+  Fehlende Pflichtprüfungen verhindern vollständigen Erfolg; statische
+  Teilprüfungen werden ausdrücklich gekennzeichnet. Ein eigener CI-Job prüft
+  das Backend. Lokale Initialisierung ergänzt fehlende Werte, erhält aber
+  bestehende Passwörter, Benutzerfelder und Referenzmounts.
+
+Begründungen und geprüfte Alternativen stehen in der
+[Feature-Recherche](../specs/002-backend-foundation/research.md).
+Produktionsimage, NAS-Bereitstellung und fachliche Datenmodelle bleiben Folgefeatures.
 
 ## Daten und Schnittstellen
 
@@ -374,7 +411,8 @@ in kleinere Features zerlegt.
 
 **Spezifiziert als [002 – Backend-Grundgerüst](../specs/002-backend-foundation/spec.md):**
 „Backend lokal starten und Datenbankverbindung prüfen“. Die Anforderungen
-sind geprüft; technischer Plan, Aufgaben und Umsetzung stehen noch aus.
+sind geprüft; [Plan und Verträge](../specs/002-backend-foundation/plan.md)
+sind erstellt. Aufgaben und Umsetzung stehen noch aus.
 
 Das Repository besitzt noch keine Anwendungsbasis. Ein kleines technisches
 Arbeitspaket entsprechend Phase 1 schafft die Voraussetzung für die
@@ -413,15 +451,16 @@ Umsetzung ist O-02 zu klären. Der Gesamtumfang des MVP bleibt davon unberührt.
 
 ## Offene Entscheidungen
 
-Alle Einträge haben den Status **offen**. Sie werden in der jeweiligen
-Spezifikation fachlich geklärt und im technischen Plan entschieden.
-Die bereits festgelegten Technologien bleiben dabei der Ausgangspunkt.
+O-01 ist für das Backend entschieden; die Mobile-Struktur bleibt offen.
+O-03 ist im Backend-Plan entschieden. Die übrigen Einträge bleiben **offen**
+und werden in ihren jeweiligen Features geklärt. Planungsentscheidungen sind
+noch kein Nachweis einer installierten oder getesteten Umsetzung.
 
-| ID | Zu klären | Spätestens vor |
+| ID | Gegenstand und Stand | Zeitpunkt / Folgearbeit |
 | --- | --- | --- |
-| O-01 | Anwendungsstruktur für Mobile und Backend; Umgang mit Template-Bestand, Metadaten und CI; Windows-/Container-Skriptwahl | Plan des ersten technischen Features |
+| O-01 | Backend unter `backend/`, Generatorentkopplung, Container-/CI-Weg und PowerShell-Spec-Kit im [Plan 002](../specs/002-backend-foundation/plan.md) entschieden; Mobile-Struktur noch offen | Backend umsetzen; Mobile-Struktur vor App-Grundgerüst |
 | O-02 | Anmeldeverfahren, Benutzeranlage, Sitzungen, Rollenmatrix, Anzahl/Zuweisung von Profilen und Verwaltungsrechte; konkrete Rollennamen sind bisher Beispiele | Benutzer-/Profilfeature |
-| O-03 | Unterstützte Versionen, Abhängigkeitsbindung, Datenzugriff und Migrationswerkzeug; Datenbankbereitschaft und Fehlerverhalten | Backend-Plan |
+| O-03 | Python 3.13/PostgreSQL 17, Paket-Locks/Image-Digests, synchrones SQLAlchemy/psycopg, Alembic und getrennte Health-/DB-Prüfung mit Zeitbudgets entschieden | Patchstände/Digests bei Implementierung auflösen und validieren |
 | O-04 | Pflichtfelder, Einheiten, Zeitzonen, Planüberschneidungen, Statusübergänge und Versionierung historischer Übungs-/Plandaten | Datenmodell und Trainingsplanung |
 | O-05 | Player-Verhalten bei Hintergrundbetrieb, App-Neustart und Netzausfall; Wiederaufnahme, Wiederholungsübungen und Zusammenspiel von Timer, Animation und TTS | Trainingsplayer |
 | O-06 | Speech-to-Text ohne verpflichtende KI-Cloud; Sprachen, Plattformunterstützung, Mikrofonrechte, Fehlerfälle und genaue Unterbrechung durch den Feedback-Button | Sprachfeedback |
@@ -528,6 +567,29 @@ an einer Testkopie geprüft und über das manifestgestützte Updateverfahren
 übernommen. Bestehende Benutzeränderungen und lokale Einstellungen bleiben erhalten.
 
 ## Prüfstatus
+
+### Technische Planung am 18.09.2026
+
+Plan, Recherche, Datenmodell, HTTP-/CLI-Verträge und Validierungsszenarien für
+Feature 002 wurden erstellt und gegen die Spezifikation/Constitution geprüft.
+O-01 ist für den Backend-Umfang entschieden; O-03 ist technisch entschieden.
+Aufgaben, Anwendungsimplementierung und Nutzerabnahme stehen noch aus.
+
+`python scripts/check.py` wurde auf dem Windows-Host mit Python 3.13.9
+erfolgreich ausgeführt: Dokumentlinks/Dateisyntax und alle neun vorhandenen
+Template-Tests bestanden. `git diff --check` meldete keine Formatfehler.
+Das bestätigt die Planungsdateien und den unveränderten Template-Code,
+noch keine lauffähige Backend-Anwendung.
+
+`setup-plan.ps1 -Json` wurde vor der Ausführung durch die lokale PowerShell-
+Ausführungsrichtlinie blockiert. Die Projektvorlage wurde deshalb direkt
+verwendet; die Ausführungsrichtlinie wurde nicht geändert. Vor-/Nach-Hooks
+waren nicht konfiguriert. Die Planung entstand auf `main`, ohne Commit/Push.
+
+Backend-, Datenbank-, Migrations-, Container-/Image-Build-, manuelle Starttests
+und GitHub Actions wurden in dieser Planungsarbeit nicht ausgeführt. Docker
+war auf dem untersuchten Host nicht als Befehl verfügbar. Paket-Locks und
+Image-Digests werden erst bei Implementierung erzeugt und überprüft.
 
 ### Projektgrundlage am 17.09.2026
 

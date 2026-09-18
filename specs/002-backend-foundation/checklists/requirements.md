@@ -63,6 +63,8 @@ Erweiterungen und der Standardvorlage. Der direkte Aufruf von
 `resolve-template.ps1` wurde durch die lokale PowerShell-Ausführungsrichtlinie
 blockiert; die Auswahl erfolgte anhand der geprüften Auflösungsreihenfolge.
 
-Ein technischer Plan, Aufgaben und Anwendungsimplementierung liegen für
-dieses Feature noch nicht vor. Backend-, Datenbank-, Migrations- und manuelle
-Starttests sind deshalb hier spezifiziert, aber noch nicht ausgeführt.
+Zum Zeitpunkt dieser Anforderungsprüfung am 2026-09-17 lagen technischer Plan,
+Aufgaben und Anwendungsimplementierung noch nicht vor. Seit 2026-09-18 ist der
+[technische Plan](../plan.md) erstellt; Aufgaben und Umsetzung folgen.
+Backend-, Datenbank-, Migrations- und manuelle Starttests sind weiterhin
+spezifiziert, aber noch nicht ausgeführt.

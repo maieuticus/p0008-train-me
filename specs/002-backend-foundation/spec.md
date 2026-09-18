@@ -302,10 +302,11 @@ zugehörigen Folgefeatures modelliert.
   Konsistenz, reale Prüfnachweise und Schutz bestehender Daten.
 - **Offene fachliche Fragen**: Keine für den abgegrenzten Umfang.
   Annahmen A-01 bis A-06 gelten als Ausgangspunkt.
-- **Offene technische Entscheidungen**: O-01 und O-03 aus dem
-  [DV-Konzept](../../docs/DV_KONZEPT.md#offene-entscheidungen) werden im Plan
-  bearbeitet. Dazu gehören Zielumgebung, Struktur, Versionen, Migrationswerkzeug,
-  genaue Statusantwort sowie Diagnose- und Wartezeitkonfiguration.
+- **Technische Entscheidungen**: O-01 für den Backend-Umfang und O-03 aus dem
+  [DV-Konzept](../../docs/DV_KONZEPT.md#offene-entscheidungen) sind seit 2026-09-18
+  im [technischen Plan](plan.md) und seinen Verträgen entschieden. Dazu gehören
+  Zielumgebung, Struktur, Versionsbindung, Migrationswerkzeug, genaue
+  Statusantwort sowie Diagnose- und Wartezeitkonfiguration.
   Die Trennung zwischen Backend-Status und Datenbanknachweis ist durch diese
   Spec vorgegeben. O-02 und die späteren fachlichen Entscheidungen bleiben
   den Folgefeatures zugeordnet.

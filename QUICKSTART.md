@@ -9,8 +9,9 @@ Die verbindlichen Voraussetzungen und Schritte stehen im
 4. [Projektziel](docs/DV_KONZEPT.md#projektziel),
    [ersten Funktionsumfang](docs/DV_KONZEPT.md#erster-funktionsumfang) und
    [offene Entscheidungen](docs/DV_KONZEPT.md#offene-entscheidungen) lesen.
-5. Das erste Feature mit dem vorhandenen Skill `speckit-specify`
-   beschreiben, Anforderungen klären und anschließend technisch planen.
+5. Für das bereits spezifizierte und [geplante Backend-Grundgerüst](specs/002-backend-foundation/plan.md)
+   mit `speckit-tasks` Aufgaben ableiten und anschließend auf Konsistenz prüfen.
+   Neue Features beginnen mit `speckit-specify`.
 
 Spec Kit ist bereits für Codex mit PowerShell eingerichtet. Details und
 Hinweise zum optionalen Devcontainer stehen im DV-Konzept.

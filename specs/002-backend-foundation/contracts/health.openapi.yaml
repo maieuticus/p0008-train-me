@@ -1,0 +1,34 @@
+openapi: 3.1.0
+info:
+  title: Train Me Backend Health
+  version: 0.1.0
+  description: >-
+    Geplanter Vertrag für Feature 002. Bestätigt ausschließlich den laufenden
+    Backend-Prozess. Es findet kein Datenbankzugriff statt.
+paths:
+  /health:
+    get:
+      operationId: get_health
+      summary: Laufenden Backend-Prozess bestätigen
+      security: []
+      responses:
+        '200':
+          description: Backend läuft; keine Aussage zur Datenbankbereitschaft.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: ok
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - ok
